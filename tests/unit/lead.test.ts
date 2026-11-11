@@ -3,23 +3,35 @@ import { validateLead } from "@/lib/lead";
 
 const base = {
   submission_id: "0b9f3c1e-2a4d-4c8e-9f10-aaaaaaaaaaaa",
-  landing_variant: "B",
+  landing_variant: "C",
+  funnel_variant: "kurz",
+  frequency: "monatlich_1_5",
+  amount: "250_1000",
+  debtor: "privat",
+  stage: "gemahnt",
   name: "Erika Beispiel",
   company: "Beispiel Fitness GmbH",
   email: "Erika@Beispiel-Fitness.de",
-  need: "unklar",
+  contact_preference: "email",
 };
 
 describe("validateLead", () => {
-  it("Testfall 6 – Direktanfrage ohne Check ist gültig", () => {
-    const r = validateLead(base);
+  it("akzeptiert eine vollständige Anfrage und setzt Quelle und Segment serverseitig", () => {
+    const r = validateLead({ ...base, source: "manipuliert", segment: "einzelfall" });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.lead.check).toBeUndefined();
+    expect(r.lead.source).toBe("pajisto_lp_multistep");
+    expect(r.lead.segment).toBe("regelmaessig");
     expect(r.lead.email).toBe("erika@beispiel-fitness.de");
-    expect(r.lead.source).toBe("Pajisto Landingpage Forderungscheck V2");
-    expect(r.lead.landing_variant).toBe("B");
+    expect(r.lead.phone).toBeUndefined();
     expect(r.lead.utm).toEqual({});
+  });
+
+  it("lässt jede Antwortkombination zu – niemand wird aussortiert", () => {
+    for (const frequency of ["einzelfall", "paar_mal_jahr", "monatlich_1_5", "monatlich_ueber_5", "unklar"])
+      for (const amount of ["unter_250", "unterschiedlich"])
+        for (const stage of ["bestritten", "tituliert", "unsicher"])
+          expect(validateLead({ ...base, frequency, amount, stage }).ok).toBe(true);
   });
 
   it("verlangt Name, Unternehmen und E-Mail mit verständlichen Meldungen", () => {
@@ -34,52 +46,41 @@ describe("validateLead", () => {
     expect(validateLead({ ...base, email }).ok).toBe(false);
   });
 
-  it("prüft optionale Felder nur, wenn sie ausgefüllt sind", () => {
-    expect(validateLead({ ...base, phone: "", message: "" }).ok).toBe(true);
+  it("Telefon ist optional – außer bei gewünschtem Rückruf", () => {
+    expect(validateLead({ ...base, phone: "" }).ok).toBe(true);
     expect(validateLead({ ...base, phone: "+49 911 / 123-456" }).ok).toBe(true);
     expect(validateLead({ ...base, phone: "ruf mich an" }).ok).toBe(false);
-    expect(validateLead({ ...base, message: "x".repeat(2001) }).ok).toBe(false);
+
+    const callback = validateLead({ ...base, contact_preference: "rueckruf" });
+    expect(callback.ok).toBe(false);
+    if (!callback.ok) expect(callback.fields.phone).toBe("Für einen Rückruf benötigen wir Ihre Telefonnummer.");
+    expect(validateLead({ ...base, contact_preference: "rueckruf", phone: "0911 123456" }).ok).toBe(true);
+    expect(validateLead({ ...base, contact_preference: "fax" }).ok).toBe(false);
   });
 
-  it("übernimmt Check-Daten und berechnet das Volumen serverseitig neu", () => {
-    const r = validateLead({
-      ...base,
-      need: "regelmaessig",
-      check: {
-        check_route: "regelmaessig",
-        claim_count: 6,
-        claim_period: "year", // falscher Wert aus dem Browser
-        average_claim_amount_eur: 250,
-        claim_stage: "gemahnt",
-        debtor_customer_type: "privat",
-        calculated_volume_eur: 1, // manipuliert
-      },
-    });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.lead.check).toMatchObject({ claim_period: "month", calculated_volume_eur: 18000 });
-  });
-
-  it("lehnt manipulierte Check-Daten ab statt sie still zu übernehmen", () => {
-    const check = {
-      check_route: "einzeln",
-      claim_count: 1,
-      average_claim_amount_eur: 800,
-      claim_stage: "gemahnt",
-      debtor_customer_type: "privat",
-    };
+  it("lehnt fehlende oder manipulierte Funnel-Antworten ab", () => {
     for (const bad of [
-      { ...check, claim_count: 0 },
-      { ...check, claim_count: 1.5 },
-      { ...check, average_claim_amount_eur: -1 },
-      { ...check, average_claim_amount_eur: "800" },
-      { ...check, check_route: "vip" },
-      { ...check, claim_stage: "verjaehrt" },
+      { frequency: undefined },
+      { frequency: "vip" },
+      { amount: "1000000" },
+      { debtor: "" },
+      { stage: "verjaehrt" },
+      { funnel_variant: "x" },
+      { industry: "geheim" },
+      { landing_variant: "<script>" },
+      { submission_id: "kurz" },
     ]) {
-      const r = validateLead({ ...base, check: bad });
-      expect(r.ok).toBe(false);
+      const r = validateLead({ ...base, ...bad });
+      expect(r.ok, JSON.stringify(bad)).toBe(false);
       if (!r.ok) expect(r.reason).toBe("malformed");
     }
+    expect(validateLead(null).ok).toBe(false);
+    expect(validateLead([]).ok).toBe(false);
+  });
+
+  it("übernimmt die Branche nur in gültiger Form", () => {
+    const r = validateLead({ ...base, funnel_variant: "ausfuehrlich", industry: "verein" });
+    expect(r.ok && r.lead.industry).toBe("verein");
   });
 
   it("übernimmt nur die fünf UTM-Parameter und kürzt sie", () => {
@@ -93,11 +94,14 @@ describe("validateLead", () => {
     expect(r.lead.utm.utm_campaign).toHaveLength(200);
   });
 
-  it("verlangt eine gültige submission_id und ein Objekt", () => {
-    expect(validateLead({ ...base, submission_id: "kurz" }).ok).toBe(false);
-    expect(validateLead(null).ok).toBe(false);
-    expect(validateLead("text").ok).toBe(false);
-    expect(validateLead([]).ok).toBe(false);
+  it("speichert als Herkunft nur Seitenpfad und Referrer-Hostname", () => {
+    const r = validateLead({
+      ...base,
+      origin: { page_path: "/angebot?fbclid=abc&email=x@y.de#top", referrer_host: "L.Facebook.com", ip: "1.2.3.4" },
+    });
+    expect(r.ok && r.lead.origin).toEqual({ page_path: "/angebot", referrer_host: "l.facebook.com" });
+    const bad = validateLead({ ...base, origin: { page_path: "javascript:alert(1)", referrer_host: "a b/c?d" } });
+    expect(bad.ok && bad.lead.origin).toEqual({});
   });
 
   it("entfernt Steuerzeichen und Zeilenumbrüche aus einzeiligen Feldern", () => {

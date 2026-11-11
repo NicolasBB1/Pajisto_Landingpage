@@ -1,153 +1,192 @@
-import { expect, test } from "@playwright/test";
-import { fillContact, open, runCheck, text } from "./helpers";
+import { expect, test, type Page } from "@playwright/test";
+import { answer, answerQuestions, fillContact, funnel, open } from "./helpers";
 
 const VIEWPORTS = [
-  { width: 360, height: 740 },
-  { width: 390, height: 844 },
-  { width: 768, height: 1024 },
-  { width: 1024, height: 768 },
-  { width: 1440, height: 900 },
+  { name: "Android", width: 360, height: 740 },
+  { name: "iPhone", width: 390, height: 844 },
+  { name: "Tablet", width: 768, height: 1024 },
+  { name: "Laptop", width: 1024, height: 768 },
+  { name: "Desktop", width: 1440, height: 900 },
 ];
 
-async function expectNoHorizontalOverflow(page: import("@playwright/test").Page, label: string) {
-  const { scroll, client } = await page.evaluate(() => ({
+async function expectNoOverflow(page: Page, label: string) {
+  const r = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth,
     client: document.documentElement.clientWidth,
+    shifted: [...document.querySelectorAll("*")].filter((el) => el.scrollLeft !== 0).length,
   }));
-  expect(scroll, `${label}: horizontaler Überlauf`).toBeLessThanOrEqual(client);
+  expect(r.scroll, `${label}: horizontaler Überlauf`).toBeLessThanOrEqual(r.client);
+  expect(r.shifted, `${label}: seitlich verschobener Bereich`).toBe(0);
 }
 
-test.describe("Testfall 12 – Mobile, Tablet, Desktop", () => {
+test.describe("Mobile, Tablet, Desktop", () => {
   for (const viewport of VIEWPORTS) {
-    test(`${viewport.width}px: kein Überlauf, Check und Formular bedienbar`, async ({ page }) => {
+    test(`${viewport.name} ${viewport.width}px: erste Frage früh sichtbar, kein Überlauf, große Antwortflächen`, async ({ page }) => {
       await page.setViewportSize(viewport);
-      // Banner bewusst offen lassen: Auch damit darf nichts überlaufen.
       await open(page, "none");
-      await expectNoHorizontalOverflow(page, "Start mit Consent-Banner");
+      await expectNoOverflow(page, "Start mit Consent-Banner");
       await page.getByTestId("consent-deny").click();
 
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-      await expect(page.locator(".nav .btn")).toBeInViewport();
+      // Die erste Frage beginnt im ersten Bildschirm.
+      const question = funnel(page).getByRole("heading");
+      const top = (await question.boundingBox())!.y;
+      expect(top, "Position der ersten Frage").toBeLessThan(viewport.height * 0.62);
 
-      await runCheck(page, { route: "regelmaessig", count: "100000", amount: "10.000.000" });
-      await expect(page.getByTestId("volume-result")).toBeVisible();
-      await expectNoHorizontalOverflow(page, "Ergebnis mit Maximalwerten");
-      // Kein Bereich darf seitlich verschoben sein (dekorative Formen ragen über den Rand).
-      expect(await page.evaluate(() => [...document.querySelectorAll("*")].filter((el) => el.scrollLeft !== 0).length)).toBe(0);
-      const cta = page.getByTestId("result-cta");
-      const box = (await cta.boundingBox())!;
-      expect(box.x).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
-      expect(box.height).toBeGreaterThanOrEqual(44);
+      for (const option of await funnel(page).locator(".funnel-option").all()) {
+        const box = (await option.boundingBox())!;
+        expect(box.height).toBeGreaterThanOrEqual(56);
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      }
 
-      await cta.click();
+      await answerQuestions(page);
+      await expectNoOverflow(page, "Kontaktschritt");
       await fillContact(page, { company: "Sehr lange Beispielfirma für Gebäudemanagement und Dienstleistungen GmbH & Co. KG" });
       const submit = page.getByTestId("submit");
       await submit.scrollIntoViewIfNeeded();
       await expect(submit).toBeInViewport();
-      await expectNoHorizontalOverflow(page, "Formular");
-
+      expect((await submit.boundingBox())!.height).toBeGreaterThanOrEqual(48);
       await submit.click();
-      await expect(page.getByTestId("form-success")).toBeVisible();
-      await expectNoHorizontalOverflow(page, "Erfolgsansicht");
+      await expect(page.getByTestId("funnel-success")).toBeVisible();
+      await expect(page.getByTestId("funnel-success")).toBeInViewport();
+      await expectNoOverflow(page, "Bestätigung");
     });
   }
+
+  test("kein Layoutsprung: die Karte behält auf dem Desktop über alle Fragen ihre Höhe", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open(page);
+    const height = async () => Math.round((await funnel(page).boundingBox())!.height);
+    const first = await height();
+    await answer(page, "frequency", "einzelfall");
+    expect(await height()).toBe(first);
+    await answer(page, "amount", "unter_250");
+    expect(await height()).toBe(first);
+    await answer(page, "debtor", "privat");
+    expect(await height()).toBe(first);
+  });
 });
 
-test.describe("Testfall 13 – Tastatur und Screenreader-Kern", () => {
-  test("alle drei Schritte und das Formular sind ohne Maus bedienbar", async ({ page }) => {
+test.describe("Tastatur und Screenreader-Kern", () => {
+  test("der gesamte Funnel ist ohne Maus bedienbar", async ({ page }) => {
     await open(page, "none");
-    // Consent per Tastatur ablehnen.
     await page.getByTestId("consent-deny").focus();
     await page.keyboard.press("Enter");
 
-    // Schritt 1: Radiogruppe mit Pfeiltasten.
-    const card = page.getByTestId("check-card");
-    await card.getByRole("radio", { name: /Gelegentlich/ }).focus();
-    await page.keyboard.press("ArrowDown");
-    await expect(card.getByRole("radio", { name: /Jeden Monat/ })).toBeChecked();
+    const f = funnel(page);
+    await f.locator(".funnel-option").first().focus();
     await page.keyboard.press("Tab");
-    await expect(card.getByRole("button", { name: "Weiter" })).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(f.locator('[data-value="monatlich_1_5"]')).toBeFocused();
     await page.keyboard.press("Enter");
 
-    // Schritt 2: Fokus liegt auf der neuen Überschrift, Felder per Tab erreichbar.
-    await expect(card.getByRole("heading", { name: "Erzählen Sie uns kurz mehr." })).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(card.getByLabel("Wie viele Forderungen ungefähr pro Monat?")).toBeFocused();
-    await page.keyboard.press("ControlOrMeta+a");
-    await page.keyboard.type("6");
-    await page.keyboard.press("Tab");
-    await expect(card.getByLabel("Durchschnittliche Hauptforderung in Euro")).toBeFocused();
-    await page.keyboard.press("ControlOrMeta+a");
-    await page.keyboard.type("250");
-    // Enter im Feld sendet Schritt 2 ab.
-    await page.keyboard.press("Enter");
+    // Nach jedem Schritt liegt der Fokus auf der neuen Frage; Tab führt zur ersten Antwort.
+    for (const [step, title] of [
+      ["amount", "Wie hoch sind die offenen Forderungen ungefähr?"],
+      ["debtor", "Wer schuldet Ihnen das Geld?"],
+      ["stage", "Wie ist der aktuelle Stand?"],
+    ] as const) {
+      await expect(f).toHaveAttribute("data-step", step);
+      await expect(f.getByRole("heading", { name: title })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(f.locator(".funnel-option").first()).toBeFocused();
+      await page.keyboard.press("Space");
+    }
 
-    // Schritt 3: Ergebnis-Überschrift erhält den Fokus.
-    await expect(page.getByTestId("result-title")).toBeFocused();
-    expect(text(await page.getByTestId("volume-result").textContent())).toBe("18.000 €");
+    await expect(f.getByRole("heading", { name: "Wie können wir Sie erreichen?" })).toBeFocused();
     await page.keyboard.press("Tab");
-    await expect(page.getByTestId("result-cta")).toBeFocused();
-    await page.keyboard.press("Enter");
-
-    // Formular: Fokus im ersten Feld, Ausfüllen und Absenden per Tastatur.
-    await expect(page.locator("#contact-name")).toBeFocused();
+    await expect(page.locator("#funnel-name")).toBeFocused();
     await page.keyboard.type("Erika Beispiel");
     await page.keyboard.press("Tab");
     await page.keyboard.type("Beispiel GmbH");
     await page.keyboard.press("Tab");
     await page.keyboard.type("erika@beispiel.de");
+    await page.keyboard.press("Tab");
+    // Kontaktpräferenz: echte Radiogruppe, Pfeiltaste wechselt auf Rückruf.
+    await expect(page.getByRole("radio", { name: "Per E-Mail" })).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByRole("radio", { name: "Per Rückruf" })).toBeChecked();
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#funnel-phone")).toBeFocused();
+    await page.keyboard.type("0911 123456");
     await page.keyboard.press("Enter");
-    const success = page.getByTestId("form-success");
+
+    const success = page.getByTestId("funnel-success");
     await expect(success).toBeVisible();
-    await expect(success).toBeFocused();
+    await expect(success.getByRole("heading")).toBeFocused();
   });
 
-  test("Fehler in Schritt 2 werden angesagt und mit dem Feld verknüpft", async ({ page }) => {
+  test("Skip-Link ist das erste Tab-Ziel und führt zur Anfrage", async ({ page }) => {
+    await open(page, "none");
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: "Direkt zur Anfrage" });
+    await expect(skip).toBeFocused();
+    await expect(skip).toHaveAttribute("href", "#anfrage");
+  });
+
+  test("Antwortkarten melden ihren Zustand, Fortschritt ist ausgezeichnet", async ({ page }) => {
     await open(page);
-    const card = page.getByTestId("check-card");
-    await card.getByRole("button", { name: "Weiter" }).click();
-    const count = card.locator('input[name="count"]');
-    await count.fill("0");
-    await count.press("Enter");
-    const describedBy = (await count.getAttribute("aria-describedby"))!.split(" ");
-    const errorId = describedBy.find((id) => id.endsWith("count-error"))!;
-    const error = page.locator(`[id="${errorId}"]`);
-    await expect(error).toHaveAttribute("role", "alert");
-    await expect(error).toHaveText("Die Anzahl muss mindestens 1 betragen.");
+    const f = funnel(page);
+    await expect(f.getByRole("group", { name: "Wie häufig bleiben bei Ihnen Rechnungen offen?" })).toBeVisible();
+    await expect(f.locator(".funnel-option").first()).toHaveAttribute("aria-pressed", "false");
+    await answer(page, "frequency", "einzelfall");
+    await f.getByRole("button", { name: "Zurück" }).click();
+    await expect(f.locator('[data-value="einzelfall"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(f.getByRole("progressbar", { name: "Fortschritt der Anfrage" })).toBeVisible();
+  });
+
+  test("Reduced Motion: keine Animationen im Funnel", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await open(page);
+    await answer(page, "frequency", "einzelfall");
+    expect(await page.locator(".funnel-step").evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
   });
 
   test("semantische Grundstruktur: eine H1, beschriftete Felder, Honeypot unsichtbar", async ({ page }) => {
     await open(page);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Offene Rechnungen\?\s*Wir übernehmen das\./);
     await expect(page.locator("html")).toHaveAttribute("lang", "de");
     await expect(page.getByRole("main")).toHaveCount(1);
-    await expect(page.getByRole("navigation", { name: "Hauptnavigation" })).toBeVisible();
-
+    await answerQuestions(page);
     const unlabeled = await page.evaluate(() =>
       [...document.querySelectorAll<HTMLInputElement>("input, select, textarea")]
         .filter((el) => !el.labels?.length && !el.getAttribute("aria-label"))
         .map((el) => el.name || el.id),
     );
     expect(unlabeled).toEqual([]);
-
     const hp = page.locator('input[name="company_website"]');
     await expect(hp).toHaveAttribute("tabindex", "-1");
     await expect(page.locator(".hp-field")).toHaveAttribute("aria-hidden", "true");
-    await expect(hp).not.toBeInViewport();
+    // Keine Abfrage von Schuldnerdaten oder Dokumenten.
+    await expect(page.locator('input[type="file"], textarea')).toHaveCount(0);
   });
 
-  test("Seite ist als noindex markiert, verlinkt Impressum/Datenschutz und zeigt in Produktion keine Vorschau-Leiste", async ({ page }) => {
+  test("Seite: Struktur, Hero-Texte, noindex, Rechtslinks, keine Vorschau-Leiste im Produktions-Build", async ({ page }) => {
     await open(page);
+    await expect(page.locator(".hero-sub")).toHaveText(
+      "Ob eine einzelne Forderung oder regelmäßig ausbleibende Zahlungen: Pajisto unterstützt Unternehmen bei der professionellen Durchsetzung offener Forderungen – auf Wunsch bis zur Vollstreckung.",
+    );
+    await expect(page.locator(".hero-micro")).toContainText("Vier kurze Fragen. Unverbindlich. Ohne Registrierung.");
+    for (const name of ["Weniger eigenes Nachfassen", "Professionelle Bearbeitung", "Bis zur Vollstreckung, wenn nötig", "So geht es weiter.", "Häufige Fragen."]) {
+      await expect(page.getByRole("heading", { name })).toBeVisible();
+    }
+    await expect(page.locator("details")).toHaveCount(6);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
     await expect(page.getByTestId("preview-bar")).toHaveCount(0);
-    await expect(page.getByRole("contentinfo").getByRole("link", { name: "Impressum" })).toHaveAttribute("href", "https://www.pajisto.de/impressum");
-    await expect(page.getByRole("contentinfo").getByRole("link", { name: "Datenschutz" })).toHaveAttribute("href", "https://www.pajisto.de/datenschutz");
+    const footer = page.getByRole("contentinfo");
+    await expect(footer.getByRole("link", { name: "Impressum" })).toHaveAttribute("href", "https://www.pajisto.de/impressum");
+    await expect(footer.getByRole("link", { name: "Datenschutz" })).toHaveAttribute("href", "https://www.pajisto.de/datenschutz");
+    await answerQuestions(page);
+    await expect(funnel(page).getByRole("link", { name: "Datenschutzerklärung" })).toHaveAttribute("href", "https://www.pajisto.de/datenschutz");
   });
 
-  test("Seitentext enthält keine unzulässigen Versprechen oder Preisangaben", async ({ page }) => {
+  test("Seitentext enthält keine unzulässigen Versprechen, Preise, Bewertungen oder Verknappung", async ({ page }) => {
     await open(page);
+    await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
     const body = await page.locator("body").innerText();
-    expect(body).not.toMatch(/garant|erfolgsquote|kostenlos|ohne risiko|100\s?%|smart flat|schuldner trägt|trägt der schuldner/i);
+    expect(body).not.toMatch(
+      /garant|erfolgsquote|kostenlos|ohne risiko|100\s?%|smart flat|schuldner trägt|trägt der schuldner|nur noch|nur heute|sterne|bewertung|kunden vertrauen/i,
+    );
   });
 });

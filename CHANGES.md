@@ -1,38 +1,32 @@
-# Änderungen gegenüber der HTML-Vorschau (Variante B)
+# Änderungen
 
-Die Vorschau liegt unverändert unter `reference/variante-b-vorschau.html`.
-Look & Feel, Abschnittsfolge und Kerntexte sind übernommen.
+## Variante C – Multistep-Anfrage (11.11.2026)
 
-## Technik
+Ersetzt Variante B (Forderungscheck → Rechenergebnis → separates Formular).
 
-- Eine HTML-Datei → Next.js (App Router, TypeScript) mit statischer Seite und einem Server-Endpunkt. Grund: Der Close-Key muss serverseitig bleiben.
-- Demoformular → echtes Formular mit Client- und Server-Validierung, Ladezustand, Fehler-/Erfolgsansicht, Honeypot, Rate-Limit, Idempotenz.
-- Neu: Close-Adapter, consent-gesteuertes Eventsystem, UTM-Übernahme, `noindex` für Testdeployments, Sicherheits-Header.
-- Vorschau-Leiste nur noch in der Entwicklung bzw. per Schalter; „Konzeptvorschau“ im Footer durch Firmenangaben ersetzt.
+**Funnel**
+- Ein einziger Ablauf im Hero: vier Fragen, dann Kontakt. Kein Rechenergebnis, keine zweite Formularstrecke, keine Zahleneingaben mehr.
+- Antwortkarten mit automatischer Weiterleitung, Zurück/Weiter, Fortschritt, Kurztexte je nach Antwort (Singular beim Einzelfall, eigene Texte für bestritten/tituliert).
+- Kontaktwunsch E-Mail oder Rückruf; Telefon nur bei Rückruf Pflicht. Das Nachrichtenfeld entfällt (weniger Reibung, keine Schuldnerdaten im Freitext).
+- Jede Antwortkombination kann abschließen. Segment und Betreuungspotenzial sind nur intern in Close sichtbar.
+- A/B-Schalter kurz/ausführlich (zusätzliche Branchenfrage), auch per URL.
 
-## Forderungscheck
+**Seite**
+- Hero mit neuer Headline, Subheadline und Microcopy; die Beispiel-Illustration ist dem Funnel gewichen. Mobil folgt die erste Frage direkt auf die Headline, die Subheadline steht darunter.
+- Ein CTA-Wortlaut („Anfrage starten“) in Header und Schlussabschnitt, beide führen zum selben Funnel. Die Telefonnummer steht nur noch als Textlink im Schlussabschnitt.
+- Neu: drei Nutzenargumente, „So geht es weiter“, FAQ mit Kostenfrage (ohne Preise). Entfallen: Schmerzpunkt-Karten, Leistungsübersicht, Bewertungen (es liegen keine belegbaren vor).
 
-- Schritt 1 sind jetzt echte Radiobuttons (Pfeiltasten, Screenreader) statt Buttons.
-- Zahlenfelder: Textfelder mit eigener Prüfung statt `type=number`. Deutsche Schreibweise („1.250,50“) wird verstanden, „2,5 Forderungen“ wird abgelehnt statt still abgerundet, Mindestbetrag 1 € entfällt.
-- Routenwechsel setzt nur noch die Anzahl auf den passenden Startwert; Betrag, Stadium und Kundentyp bleiben erhalten. Erneutes Wählen derselben Route ändert nichts mehr.
-- Ergebnistexte der drei Routen wörtlich nach Masterprompt. Bestritten/tituliert haben eigene Überschrift, eigenen Text und eigenen CTA.
-- Volumen: Beschriftung „pro Jahr“ bzw. „hochgerechnet auf 12 Monate“, fester Hinweis „Rechnerische Summe der angegebenen Hauptforderungen. Keine Prognose von Zahlungseingängen.“, ab 1 Mio. € gerundete Angabe.
-- Fokus springt bei jedem Schritt auf die neue Überschrift; die Karte wird unter dem fixierten Header ausgerichtet.
-- Stadium-Optionen gekürzt, damit sie auf dem Handy nicht abgeschnitten werden.
+**Daten und Close**
+- Leadquelle `pajisto_lp_multistep`, serverseitiger Zeitstempel, Segment, Herkunft (nur Seitenpfad und Referrer-Hostname), Anfrage-ID. Neue Feldliste in `docs/CLOSE_INTEGRATION.md`.
+- „Demo-Modus“ heißt jetzt „Vorschau-Modus“ und erscheint nur bei ausdrücklich gesetztem `LEAD_MODE=mock`.
 
-## Texte und Conversion
+**Tracking**
+- Events für Start, Schritte, Abbruch, Lead, Terminlink. Keine Antworten in Events. `Lead` je Anfrage höchstens einmal.
 
-- Hero: primärer CTA „Forderungscheck starten“ (wie im Header, ein Begriff für eine Aktion), sekundär „Direkt anfragen“. „In 60 Sekunden“ → „Drei kurze Schritte“, weil die Zeitangabe nicht belegt ist.
-- Vertrauensleiste: „Registrierter Inkassodienstleister (§ 10 RDG)“ – gegen das Impressum geprüft.
-- Gerichtliche Durchsetzung vorsichtiger formuliert („können je nach Sachlage und nach Abstimmung … folgen“).
-- Check-Vorteil „Keine unrealistischen Erfolgsversprechen“ → „Keine Erfolgsversprechen, keine Prognosen“.
-- FAQ: Tippfehler korrigiert, Abo-Frage ohne das Wort „Abo“.
-- Formular: Platzhalter-Namen entfernt, Hinweis „keine Kundennamen/Unterlagen“, Datenschutzhinweis mit Link, Check-Zusammenfassung mit „Nicht mitsenden“, Button „Unverbindlich anfragen“.
-- Kontakt: Telefonnummer anklickbar, vollständige Adresse aus dem Impressum.
+**Qualität**
+- Behoben während der Tests: Karte sprang nach der ersten Frage in der Höhe; Hover-Markierung blieb auf Touch-Geräten stehen.
 
-## Gestaltung
+## Variante B – Forderungscheck (10.11.2026)
 
-- Unicode-Symbole (▤ ◷ ↗ ⚖ ⌂) → eigene SVG-Icons, weil die Zeichen je Gerät unterschiedlich aussehen.
-- Hero-Headline etwas kleiner, damit „Offene Rechnungen?“ in einer Zeile bleibt.
-- Kleine Texte dunkler (Kontrast), Formularfelder 16 px (kein Zoom auf iOS), größere Tippflächen.
-- Behoben: Bereiche mit überstehenden Deko-Formen konnten seitlich verrutschen; die Leistungs-Karten liefen bei 390 px über den Rand.
+Umsetzung der HTML-Vorschau als Next.js-Projekt; Details in der Git-Historie.
+Die Vorschau liegt unter `reference/variante-b-vorschau.html`.

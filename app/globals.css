@@ -128,3 +128,95 @@ html{scroll-padding-top:96px}
 .solutions-grid>*,.solution-stack>*,.check-grid>*,.hero-grid>*,.contact-grid>*{min-width:0}
 h1,h2,h3{overflow-wrap:break-word}
 @media(max-width:720px){h2,h3{hyphens:auto}.solution-feature h3{font-size:26px}}
+
+/* ═════════════════════════ Multistep-Anfrage (Variante C) ═════════════════════════ */
+.hero{padding:64px 0 84px}
+.hero-grid{grid-template-columns:minmax(0,1fr) minmax(0,520px);grid-template-areas:"head funnel" "sub funnel" "micro funnel" ". funnel";grid-template-rows:auto auto auto 1fr;column-gap:64px;row-gap:0;align-items:start}
+.hero-head{grid-area:head;padding-top:34px}
+.hero-sub{grid-area:sub;margin:0}
+.hero-micro{grid-area:micro;margin:22px 0 0;font-size:13px;font-weight:650}
+.hero-funnel{grid-area:funnel}
+.display{font-size:clamp(44px,4.5vw,66px);margin:18px 0 22px}
+
+.funnel{position:relative;background:#fff;border:1px solid #dfe8da;border-radius:26px;padding:28px 30px 18px;box-shadow:0 30px 60px #2a3f2a1f,0 2px 6px #2a3f2a0d;min-height:590px;display:flex;flex-direction:column}
+.funnel-top{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.funnel-count{font-size:11px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;color:#587a5f;white-space:nowrap}
+.funnel-bar{flex:1;height:6px;border-radius:99px;background:#e6ece2;overflow:hidden}
+.funnel-bar span{display:block;height:100%;border-radius:99px;background:#7fae6c;transition:width .28s ease}
+.funnel h2{font-size:25px;line-height:1.22;letter-spacing:-.045em;font-weight:800;margin:0 0 8px}
+.funnel-hint{margin:0 0 18px;font-size:13px;line-height:1.6;color:#5a6c5f}
+.funnel-step{flex:1}
+.funnel-step.forward{animation:funnel-in-forward .2s ease-out both}
+.funnel-step.back{animation:funnel-in-back .2s ease-out both}
+@keyframes funnel-in-forward{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes funnel-in-back{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.funnel-options{display:grid;gap:10px}
+.funnel-option{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-height:58px;padding:14px 16px 14px 18px;text-align:left;font-size:15px;font-weight:700;line-height:1.35;color:var(--dark);background:#fbfcf8;border:1.5px solid #d6e2d2;border-radius:15px;transition:border-color .15s,background .15s,transform .15s}
+/* Hover nur mit Maus: Auf Touch-Geräten bliebe die Markierung sonst nach dem Tippen stehen. */
+@media(hover:hover){.funnel-option:hover{border-color:#88ab7b;background:#f4f9ef}}
+.funnel-option:active{transform:scale(.99)}
+.funnel-option.selected{border-color:#5f8f5c;background:#eaf5e2;box-shadow:0 0 0 2px #d3e8c8 inset}
+.funnel-radio{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid #b3c8ae;background:#fff}
+.funnel-option.selected .funnel-radio{border-color:#4f7d57;background:radial-gradient(#4f7d57 0 42%,#fff 48%)}
+.funnel-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px;min-height:44px}
+.funnel-nav .back-btn{padding:10px 6px;color:#587a5f}
+.funnel-nav .next-btn{color:var(--dark)}
+.funnel-fields{display:grid;grid-template-columns:1fr 1fr;gap:13px 14px}
+.funnel-fields .contact-field.full{grid-column:1/-1}
+.funnel fieldset{border:0;margin:0;padding:0;min-width:0}
+.funnel legend{padding:0;font-size:12px;color:#5a715f;font-weight:790;margin-bottom:7px}
+.pref-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pref-option{position:relative;display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px;border:1.5px solid #d6e2d2;border-radius:12px;background:#fbfcf8;font-size:14px;font-weight:750;cursor:pointer}
+.pref-option input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.pref-option.selected{border-color:#5f8f5c;background:#eaf5e2;box-shadow:0 0 0 2px #d3e8c8 inset}
+.pref-option:has(input:focus-visible){outline:3px solid #72a775;outline-offset:3px}
+.funnel-submit{width:100%;margin-top:18px;min-height:54px;font-size:14px}
+.funnel .form-note{margin-top:12px}
+.funnel .mode-notice{margin-bottom:16px}
+.funnel-done{justify-content:center}
+.funnel-done .round-check{width:48px;height:48px;margin-bottom:20px}
+.funnel-done h2{font-size:27px;margin-bottom:12px}
+.funnel-done p{font-size:15px;line-height:1.7;color:#55665b;margin:0}
+.booking{margin-top:24px;padding-top:22px;border-top:1px solid #e3eadf}
+.booking p{font-size:13px;margin-bottom:14px}
+.booking .btn{border-color:var(--dark)}
+
+.card .card-icon{margin:0 0 22px}
+.steps{margin-top:40px}
+.step strong{font-size:13px}
+.step h3{margin-top:18px}
+
+.final-cta{background:var(--dark);color:#fff;padding:72px 0}
+.final-row{display:flex;align-items:center;justify-content:space-between;gap:40px}
+.final-cta h2{font-size:clamp(28px,3.4vw,42px);letter-spacing:-.055em;line-height:1.15;font-weight:780;margin:0 0 12px;max-width:640px}
+.final-cta p{margin:0;color:#b9c9be;font-size:15px}
+.final-cta p a{color:#fff;font-weight:750;text-decoration:underline;white-space:nowrap}
+.final-cta .btn{flex:none;padding:18px 28px;font-size:14px}
+.final-cta a:focus-visible{outline-color:var(--lime)}
+
+@media(max-width:1050px){
+  .hero-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "micro" "funnel" "sub";grid-template-rows:auto;justify-items:stretch}
+  .hero{padding:44px 0 64px}
+  .hero-head{padding-top:0}
+  .hero-micro{margin:0 0 22px}
+  .hero-sub{margin-top:30px;max-width:640px}
+  .hero-funnel{max-width:640px;width:100%}
+  .funnel{min-height:0}
+}
+@media(max-width:720px){
+  .hero{padding:26px 0 52px}
+  .hero-head .eyebrow{font-size:10px}
+  .display{font-size:clamp(31px,9.2vw,52px);margin:12px 0 12px}
+  .hero-micro{font-size:12px;margin-bottom:18px}
+  .funnel{padding:20px 18px 16px;border-radius:22px}
+  .funnel h2{font-size:22px}
+  .funnel-option{min-height:60px;font-size:15px;padding:14px 14px 14px 16px}
+  .funnel-fields{grid-template-columns:1fr}
+  .final-cta{padding:56px 0}
+  .final-row{flex-direction:column;align-items:stretch;gap:26px}
+  .final-cta .btn{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .funnel-step.forward,.funnel-step.back{animation:none}
+  .funnel-bar span,.funnel-option{transition:none}
+}

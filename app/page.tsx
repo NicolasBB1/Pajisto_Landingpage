@@ -1,30 +1,33 @@
 import { ConsentBanner, ConsentSettingsButton } from "@/components/ConsentBanner";
-import { ContactForm } from "@/components/ContactForm";
-import { ForderungsCheck } from "@/components/ForderungsCheck";
+import { Funnel, FunnelMicrocopy } from "@/components/Funnel";
 import { Arrow, Icon } from "@/components/Icon";
 import { COMPANY, LANDING_VARIANT, SHOW_PREVIEW_BAR } from "@/lib/public-config";
 import { getLeadMode } from "@/lib/server/config";
 
 const FAQ = [
   {
-    q: "Lohnt sich Inkasso überhaupt, wenn ich nur selten offene Rechnungen habe?",
-    a: "Auch einzelne Forderungen können Sie zur Prüfung anfragen. Ob und welche Beauftragung wirtschaftlich sinnvoll ist, hängt unter anderem von der Forderungshöhe und vom Fall ab. Das besprechen wir offen mit Ihnen.",
+    q: "Kann ich auch nur eine einzelne Rechnung anfragen?",
+    a: "Ja. Sie brauchen keine Mindestanzahl an Fällen. Ob und wie eine Beauftragung für Ihre Forderung sinnvoll ist, besprechen wir offen mit Ihnen.",
   },
   {
-    q: "Muss ich für den Forderungscheck etwas abschließen?",
-    a: "Nein. Der Check dient der unverbindlichen Orientierung und funktioniert ohne Registrierung. Die Zusammenarbeit und mögliche Modelle besprechen wir erst danach persönlich.",
+    q: "Bei uns bleiben regelmäßig Rechnungen offen. Wie läuft das ab?",
+    a: "Dann lohnt sich ein fester Ablauf, über den Sie neue Fälle laufend an uns übergeben. Wie das zu Ihren Abläufen passt, klären wir im Gespräch.",
   },
   {
-    q: "Was passiert, wenn Kunden ihre Forderungen bestreiten?",
-    a: "Dann kommt es auf den konkreten Sachverhalt, Ihre Unterlagen und den Inhalt der Einwendungen an. Wir schauen uns Ihre Situation individuell an.",
+    q: "Was kostet die Zusammenarbeit?",
+    a: "Das hängt von Art und Anzahl Ihrer Forderungen ab. Die Konditionen nennen wir Ihnen im Gespräch, bevor Sie etwas beauftragen. Die Anfrage selbst verpflichtet Sie zu nichts.",
   },
   {
-    q: "Bearbeitet Pajisto auch bereits titulierte Forderungen?",
-    a: "Ja, auch die Durchsetzung titulierter Forderungen kann Gegenstand einer Anfrage sein. Welche Vollstreckungsmaßnahmen in Betracht kommen, klären wir im Einzelfall.",
+    q: "Was passiert, wenn mein Kunde die Forderung bestreitet?",
+    a: "Dann kommt es auf den Sachverhalt, Ihre Unterlagen und den Inhalt der Einwendungen an. Das lässt sich nicht pauschal beantworten – wir sehen uns Ihre Situation individuell an.",
   },
   {
-    q: "Ist die Anfrage bereits eine verbindliche Beauftragung?",
-    a: "Nein. Eine unverbindliche Anfrage oder das Ausfüllen des Checks ist keine Inkasso-Beauftragung. Sie entscheiden nach dem Gespräch, ob und wie Sie uns beauftragen.",
+    q: "Ich habe bereits einen Titel. Kann Pajisto trotzdem helfen?",
+    a: "Ja, auch titulierte Forderungen können Sie anfragen. Welche Vollstreckungsmaßnahmen in Betracht kommen, klären wir im Einzelfall.",
+  },
+  {
+    q: "Ist die Anfrage schon eine Beauftragung?",
+    a: "Nein. Die Anfrage ist unverbindlich und keine Inkasso-Beauftragung. Sie entscheiden nach dem Gespräch, ob und wie Sie uns beauftragen.",
   },
 ];
 
@@ -44,121 +47,51 @@ export default function Page() {
 
   return (
     <>
-      <a className="skip-link" href="#check">
-        Direkt zum Forderungscheck
+      <a className="skip-link" href="#anfrage">
+        Direkt zur Anfrage
       </a>
       {SHOW_PREVIEW_BAR && (
         <div className="preview-bar" data-testid="preview-bar">
-          ENTWICKLUNGSVORSCHAU · VARIANTE {LANDING_VARIANT} · NICHT DIE LIVE-SEITE
+          VORSCHAU · VARIANTE {LANDING_VARIANT} · NICHT DIE LIVE-SEITE
         </div>
       )}
       <header className="nav-wrap">
         <nav className="nav container" aria-label="Hauptnavigation">
           <Logo />
           <div className="links">
-            <a href="#leistungen">Leistungen</a>
-            <a href="#ablauf">So funktioniert&apos;s</a>
+            <a href="#vorteile">Vorteile</a>
+            <a href="#ablauf">Ablauf</a>
             <a href="#fragen">Fragen &amp; Antworten</a>
           </div>
-          <a href="#check" className="btn btn-dark">
-            Forderungscheck starten <Arrow />
+          <a href="#anfrage" className="btn btn-dark">
+            Anfrage starten <Arrow />
           </a>
         </nav>
       </header>
 
       <main id="top">
-        <section className="hero">
+        <section className="hero" aria-labelledby="hero-title">
           <div className="container hero-grid">
-            <div>
+            <div className="hero-head">
               <div className="eyebrow">Forderungsmanagement für Unternehmen</div>
-              <h1 className="display">
+              <h1 className="display" id="hero-title">
                 Offene Rechnungen?
                 <br />
-                <span className="underline">Wir kümmern uns.</span>
+                <span className="underline">Wir übernehmen das.</span>
               </h1>
-              <p className="lead">
-                Ob eine einzelne Rechnung offen bleibt oder jeden Monat neue dazukommen: Pajisto unterstützt Sie bei der
-                professionellen Durchsetzung Ihrer Forderungen. Finden Sie heraus, welche Lösung zu Ihnen passt.
-              </p>
-              <div className="hero-actions">
-                <a href="#check" className="btn btn-dark">
-                  Forderungscheck starten <Arrow />
-                </a>
-                <a href="#kontakt" className="btn btn-white">
-                  Direkt anfragen
-                </a>
-              </div>
-              <div className="hero-micro">
-                <Icon name="check" size={15} /> Drei kurze Schritte · Ohne Registrierung · Unverbindlich
-              </div>
             </div>
-
-            <div className="hero-visual" role="img" aria-label="Beispielhafte Illustration einer Übersicht offener Rechnungen. Keine echten Daten.">
-              <div className="visual-bg" />
-              <div className="window" aria-hidden="true">
-                <div className="window-bar">
-                  <div>
-                    <div className="small-eyebrow">BEISPIELANSICHT · KEINE ECHTEN DATEN</div>
-                    <div className="window-title">Forderungen im Blick.</div>
-                  </div>
-                  <div className="dots">
-                    <i />
-                    <i />
-                    <i />
-                  </div>
-                </div>
-                <div className="example-card">
-                  <div className="example-icon">
-                    <Icon name="invoice" />
-                  </div>
-                  <div className="example-label">
-                    <strong>Rechnung 2026-041</strong>
-                    <small>Überfällige Forderung</small>
-                  </div>
-                  <div className="example-amount">
-                    1.250 €<span>Zu prüfen</span>
-                  </div>
-                </div>
-                <div className="example-card">
-                  <div className="example-icon">
-                    <Icon name="clock" />
-                  </div>
-                  <div className="example-label">
-                    <strong>Rechnung 2026-042</strong>
-                    <small>Zahlungserinnerung versendet</small>
-                  </div>
-                  <div className="example-amount">
-                    420 €<span>In Bearbeitung</span>
-                  </div>
-                </div>
-                <div className="example-card">
-                  <div className="example-icon">
-                    <Icon name="path" />
-                  </div>
-                  <div className="example-label">
-                    <strong>Rechnung 2026-043</strong>
-                    <small>Weiteres Vorgehen klären</small>
-                  </div>
-                  <div className="example-amount">
-                    870 €<span>In Prüfung</span>
-                  </div>
-                </div>
-                <div className="example-note">
-                  <span className="round-check">
-                    <Icon name="check" size={16} />
-                  </span>
-                  <span>
-                    <strong>Ein Ansprechpartner. Ein klarer Ablauf.</strong>
-                    <small>Passend zu Anzahl und Art Ihrer Forderungen</small>
-                  </span>
-                </div>
-              </div>
-              <div className="float-tag" aria-hidden="true">
-                <Icon name="check" size={14} /> Vom Einzelfall bis zur laufenden Betreuung
-              </div>
-              <div className="float-tag float-bottom" aria-hidden="true">
-                <Icon name="path" size={14} /> Mehr Klarheit bei offenen Rechnungen
-              </div>
+            <p className="lead hero-sub">
+              Ob eine einzelne Forderung oder regelmäßig ausbleibende Zahlungen: Pajisto unterstützt Unternehmen bei der
+              professionellen Durchsetzung offener Forderungen – auf Wunsch bis zur Vollstreckung.
+            </p>
+            <p className="hero-micro">
+              <Icon name="check" size={15} />
+              <span>
+                <FunnelMicrocopy />
+              </span>
+            </p>
+            <div className="hero-funnel">
+              <Funnel leadMode={leadMode} />
             </div>
           </div>
         </section>
@@ -169,7 +102,7 @@ export default function Page() {
               <span>
                 <Icon name="shield" size={15} />
               </span>
-              Registrierter Inkassodienstleister (§ 10 RDG)
+              Registrierter Inkassodienstleister (§ 10 RDG)
             </li>
             <li className="trust-item">
               <span>
@@ -181,7 +114,7 @@ export default function Page() {
               <span>
                 <Icon name="layers" size={15} />
               </span>
-              Einzelne und laufende Fälle
+              Einzelfälle und laufende Betreuung
             </li>
             <li className="trust-item">
               <span>
@@ -192,154 +125,77 @@ export default function Page() {
           </ul>
         </div>
 
-        <section className="section" aria-labelledby="pain-title">
+        <section className="section" id="vorteile" aria-labelledby="benefits-title">
           <div className="container">
             <div className="section-intro">
-              <div className="eyebrow">Kommt Ihnen bekannt vor?</div>
-              <h2 id="pain-title">
-                Manchmal reicht schon
+              <div className="eyebrow">Was sich für Sie ändert</div>
+              <h2 id="benefits-title">
+                Sie haben geliefert.
                 <br />
-                eine offene Rechnung.
+                Um die Zahlung kümmern wir uns.
               </h2>
-              <p className="lead">
-                Unbezahlte Rechnungen halten Sie auf – egal ob einmal im Jahr oder regelmäßig. Entscheidend ist nicht
-                nur die Anzahl der Fälle, sondern auch, wie Sie damit umgehen.
-              </p>
             </div>
             <div className="cards">
               <article className="card">
-                <div className="card-number">01 / ZAHLUNGSVERZUG</div>
-                <div className="card-icon">
-                  <Icon name="invoice" size={23} />
-                </div>
-                <h3>Der Betrag bleibt offen.</h3>
-                <p>Sie haben Ihre Leistung erbracht, aber die Zahlung lässt auf sich warten. Das bindet Liquidität.</p>
-              </article>
-              <article className="card">
-                <div className="card-number">02 / NACHFASSEN</div>
                 <div className="card-icon">
                   <Icon name="clock" size={23} />
                 </div>
-                <h3>Erinnerungen bringen nichts.</h3>
-                <p>Sie wollen nicht immer wieder schreiben oder telefonieren – ganz gleich, wie oft das vorkommt.</p>
+                <h3>Weniger eigenes Nachfassen</h3>
+                <p>
+                  Sie müssen nicht mehr selbst immer wieder schreiben und anrufen. Sie übergeben die Forderung, wir
+                  übernehmen die Kommunikation mit dem Schuldner.
+                </p>
               </article>
               <article className="card">
-                <div className="card-number">03 / WEITERES VORGEHEN</div>
                 <div className="card-icon">
-                  <Icon name="path" size={23} />
+                  <Icon name="shield" size={23} />
                 </div>
-                <h3>Wie geht es jetzt weiter?</h3>
-                <p>Wann ist professionelle Unterstützung sinnvoll? Wir klären die Möglichkeiten mit Ihnen.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section className="check-section" id="check" aria-labelledby="check-title">
-          <div className="container check-grid">
-            <div className="check-copy">
-              <div className="eyebrow">Pajisto-Forderungscheck</div>
-              <h2 id="check-title">Welche Lösung passt zu Ihren offenen Rechnungen?</h2>
-              <p className="lead">
-                Jede Forderungssituation ist anders. Unser kurzer Check ordnet Ihren Bedarf ein und zeigt einen
-                passenden nächsten Schritt – ohne komplizierte Kostenannahmen.
-              </p>
-              <ul className="check-points">
-                <li>
-                  <Icon name="check" size={16} /> Auch für nur eine offene Rechnung
-                </li>
-                <li>
-                  <Icon name="check" size={16} /> Ergebnis in drei Schritten
-                </li>
-                <li>
-                  <Icon name="check" size={16} /> Ohne E-Mail oder Registrierung
-                </li>
-                <li>
-                  <Icon name="check" size={16} /> Keine Erfolgsversprechen, keine Prognosen
-                </li>
-              </ul>
-            </div>
-            <ForderungsCheck />
-          </div>
-        </section>
-
-        <section id="leistungen" className="section" aria-labelledby="services-title">
-          <div className="container">
-            <div className="section-intro">
-              <div className="eyebrow">So unterstützt Pajisto</div>
-              <h2 id="services-title">
-                Die passende Unterstützung.
-                <br />
-                Ganz gleich, wie oft es passiert.
-              </h2>
-              <p className="lead">
-                Nicht jedes Unternehmen braucht dieselbe Lösung. Wir klären, welche Vorgehensweise für Ihre Forderungen
-                sinnvoll ist.
-              </p>
-            </div>
-            <div className="solutions-grid">
-              <article className="solution-feature">
-                <div className="eyebrow">Für wiederkehrende Forderungen</div>
-                <h3>Laufendes Forderungsmanagement</h3>
+                <h3>Professionelle Bearbeitung</h3>
                 <p>
-                  Wenn regelmäßig Rechnungen offen bleiben, wird aus einzelnen Erinnerungen schnell ein dauerhafter
-                  Aufwand. Wir unterstützen Sie mit einem festen Ablauf, über den Sie Ihre Fälle laufend übergeben.
+                  Als registrierter Inkassodienstleister bearbeiten wir Ihre Fälle strukturiert und sachlich. Sie haben
+                  einen persönlichen Ansprechpartner und bleiben informiert.
                 </p>
-                <a href="#check">
-                  Laufende Betreuung prüfen <Arrow />
-                </a>
               </article>
-              <div className="solution-stack">
-                <article className="solution-small">
-                  <div className="shape">
-                    <Icon name="invoice" size={27} />
-                  </div>
-                  <h3>Einzelne Forderungen</h3>
-                  <p>Auch bei einer einzelnen überfälligen Rechnung können Sie sich an uns wenden.</p>
-                </article>
-                <article className="solution-small">
-                  <div className="shape">
-                    <Icon name="scale" size={27} />
-                  </div>
-                  <h3>Gerichtliche Durchsetzung</h3>
-                  <p>
-                    Wenn es erforderlich wird, können je nach Sachlage und nach Abstimmung mit Ihnen gerichtliche
-                    Schritte über Partnerkanzleien bis hin zur Vollstreckung folgen.
-                  </p>
-                </article>
-              </div>
+              <article className="card">
+                <div className="card-icon">
+                  <Icon name="scale" size={23} />
+                </div>
+                <h3>Bis zur Vollstreckung, wenn nötig</h3>
+                <p>
+                  Bleibt die Zahlung aus, können je nach Sachlage und nach Abstimmung mit Ihnen gerichtliche Schritte
+                  über Partnerkanzleien und die Vollstreckung folgen.
+                </p>
+              </article>
             </div>
           </div>
         </section>
 
         <section className="process" id="ablauf" aria-labelledby="process-title">
           <div className="container">
-            <div className="eyebrow">Einfacher Start</div>
+            <div className="eyebrow">Nach Ihrer Anfrage</div>
             <h2 id="process-title" className="section-title">
-              Vier Schritte.
-              <br />
-              Ein klarer Ablauf.
+              So geht es weiter.
             </h2>
             <ol className="steps">
               <li className="step">
-                <strong>01 / EINSCHÄTZEN</strong>
-                <h3>Situation beschreiben</h3>
-                <p>Sie schildern uns kurz, welche und wie viele Forderungen offen sind.</p>
+                <strong>01</strong>
+                <h3>Wir melden uns persönlich</h3>
+                <p>Per E-Mail oder Rückruf – so, wie Sie es in der Anfrage angeben.</p>
               </li>
               <li className="step">
-                <strong>02 / ABSTIMMEN</strong>
-                <h3>Persönlich sprechen</h3>
-                <p>Wir prüfen mit Ihnen die Voraussetzungen und Möglichkeiten.</p>
+                <strong>02</strong>
+                <h3>Wir besprechen Ihre Situation</h3>
+                <p>Welche Forderungen offen sind, was bisher passiert ist und welches Vorgehen dazu passt.</p>
               </li>
               <li className="step">
-                <strong>03 / ENTSCHEIDEN</strong>
-                <h3>Modell auswählen</h3>
-                <p>Sie entscheiden bewusst, ob und wie Sie uns beauftragen.</p>
+                <strong>03</strong>
+                <h3>Sie entscheiden</h3>
+                <p>Sie kennen die Konditionen und entscheiden in Ruhe, ob und wie Sie uns beauftragen.</p>
               </li>
               <li className="step">
-                <strong>04 / DURCHSETZEN</strong>
-                <h3>Forderungen übergeben</h3>
-                <p>Wir bearbeiten Ihre Fälle im vereinbarten Rahmen und halten Sie informiert.</p>
+                <strong>04</strong>
+                <h3>Wir übernehmen</h3>
+                <p>Sie übergeben Ihre Forderungen, wir bearbeiten sie im vereinbarten Rahmen.</p>
               </li>
             </ol>
           </div>
@@ -362,31 +218,18 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="contact" id="kontakt" aria-labelledby="contact-title">
-          <div className="container contact-grid">
+        <section className="final-cta" aria-labelledby="final-title">
+          <div className="container final-row">
             <div>
-              <div className="eyebrow">Lassen Sie uns sprechen</div>
-              <h2 id="contact-title">
-                Ein nächster Schritt.
-                <br />
-                Ganz ohne Verpflichtung.
-              </h2>
-              <p className="lead">
-                Ob ein einzelner Fall oder viele offene Rechnungen: Schildern Sie uns Ihre Situation. Gemeinsam klären
-                wir, welche Unterstützung sinnvoll ist.
-              </p>
-              <div className="contact-detail">
-                <b>Sie sprechen lieber direkt mit uns?</b>
-                <br />
+              <h2 id="final-title">Offene Rechnungen müssen nicht Ihr Problem bleiben.</h2>
+              <p>
+                Ein paar kurze Fragen, dann melden wir uns persönlich. Lieber telefonisch?{" "}
                 <a href={COMPANY.phoneHref}>{COMPANY.phoneDisplay}</a>
-                <br />
-                <br />
-                {COMPANY.name}
-                <br />
-                {COMPANY.street}, {COMPANY.city}
-              </div>
+              </p>
             </div>
-            <ContactForm leadMode={leadMode} />
+            <a href="#anfrage" className="btn btn-lime">
+              Anfrage starten <Arrow />
+            </a>
           </div>
         </section>
       </main>

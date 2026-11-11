@@ -16,6 +16,7 @@ export interface LeadDeps {
   rateLimiter: RateLimiter;
   idempotency: IdempotencyStore<LeadApiResponse & { ok: true }>;
   log?: (message: string) => void;
+  now?: () => Date;
 }
 
 export interface LeadHttpResult {
@@ -66,7 +67,7 @@ export async function handleLead(rawBody: string, clientKey: string, deps: LeadD
       if (deps.mode === "mock") {
         return { ok: true as const, mode: "mock" as const, event_id: lead.submission_id };
       }
-      await submitLeadToClose(lead, deps.close!);
+      await submitLeadToClose(lead, deps.close!, (deps.now ?? (() => new Date()))());
       return { ok: true as const, mode: "close" as const, event_id: lead.submission_id };
     });
     return { status: 200, body };

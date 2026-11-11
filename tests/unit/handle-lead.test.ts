@@ -8,11 +8,16 @@ import { defaultHandler, startCloseMock } from "./close-mock-server";
 const payload = (over: Record<string, unknown> = {}) =>
   JSON.stringify({
     submission_id: "0b9f3c1e-2a4d-4c8e-9f10-bbbbbbbbbbbb",
-    landing_variant: "B",
+    landing_variant: "C",
+    funnel_variant: "kurz",
+    frequency: "einzelfall",
+    amount: "1000_5000",
+    debtor: "geschaeft",
+    stage: "ueberfaellig",
     name: "Erika Beispiel",
     company: "Beispiel Fitness GmbH",
     email: "erika@beispiel-fitness.de",
-    need: "unklar",
+    contact_preference: "email",
     ...over,
   });
 
@@ -41,7 +46,7 @@ describe("POST /api/lead – Verarbeitung", () => {
     expect(r).toEqual({ status: 200, body: { ok: true, mode: "mock", event_id: "0b9f3c1e-2a4d-4c8e-9f10-bbbbbbbbbbbb" } });
   });
 
-  it("Testfall 6 – Direktanfrage ohne Check erreicht Close", async () => {
+  it("gültige Anfrage erreicht Close mit Zeitstempel", async () => {
     mock = await startCloseMock(defaultHandler());
     const r = await handleLead(payload(), "1.1.1.1", deps({ mode: "close", close: { apiKey: "k", baseUrl: mock.baseUrl } }));
     expect(r.status).toBe(200);
@@ -64,7 +69,7 @@ describe("POST /api/lead – Verarbeitung", () => {
     expect(hp).toEqual({ status: 400, body: { ok: false, error: "rejected" } });
   });
 
-  it("Testfall 9 – doppelte Einsendung (gleiche submission_id) erzeugt nur einen Lead", async () => {
+  it("doppelte Einsendung (gleiche submission_id) erzeugt nur einen Lead", async () => {
     mock = await startCloseMock(defaultHandler());
     const d = deps({ mode: "close", close: { apiKey: "k", baseUrl: mock.baseUrl } });
     const [a, b] = await Promise.all([handleLead(payload(), "1.1.1.1", d), handleLead(payload(), "1.1.1.1", d)]);
@@ -73,7 +78,7 @@ describe("POST /api/lead – Verarbeitung", () => {
     expect(mock.requests.filter((q) => q.path === "/api/v1/lead/")).toHaveLength(1);
   });
 
-  it("Testfall 10 – CRM nicht erreichbar: kein Erfolg, Fehlerklasse im Log ohne Personenbezug, Retry möglich", async () => {
+  it("CRM nicht erreichbar: kein Erfolg, Fehlerklasse im Log ohne Personenbezug, Retry möglich", async () => {
     let fail = true;
     mock = await startCloseMock((req, i) =>
       fail && req.path === "/api/v1/lead/" ? { status: 503, body: { error: "down" } } : defaultHandler()(req, i),

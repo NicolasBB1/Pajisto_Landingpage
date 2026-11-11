@@ -20,20 +20,33 @@
  * In Logs und Fehlern landen ausschließlich Fehlerklasse und HTTP-Status,
  * niemals API-Key, Kontaktdaten oder Antwortinhalte von Close.
  */
-import { DEBTOR_LABEL, STAGE_LABEL, countPhrase, formatEuro, type Route } from "./check";
-import { NEED_LABEL, type Lead } from "./lead";
+import {
+  AMOUNT_LABEL,
+  CONTACT_PREFERENCE_LABEL,
+  DEBTOR_LABEL,
+  FREQUENCY_LABEL,
+  INDUSTRY_LABEL,
+  SEGMENT_LABEL,
+  STAGE_LABEL,
+  hasOngoingPotential,
+  type Frequency,
+} from "./funnel";
+import type { Lead } from "./lead";
 
 export const CLOSE_API_BASE = "https://api.close.com/api/v1";
 
 export interface CloseFieldMap {
   /** Vorhandenes Auswahlfeld "Wie oft kommen bei Ihnen offene Forderungen vor?" */
   frequencyChoice?: string;
-  checkRoute?: string;
-  claimsPeriod?: string;
-  avgAmount?: string;
-  stage?: string;
+  source?: string;
+  segment?: string;
+  frequency?: string;
+  amount?: string;
   debtorType?: string;
+  stage?: string;
+  contactPreference?: string;
   landingVariant?: string;
+  funnelVariant?: string;
   utmSource?: string;
   utmCampaign?: string;
 }
@@ -81,11 +94,16 @@ export interface CloseResult {
   leadId: string;
 }
 
-/** Werte des bereits vorhandenen Close-Auswahlfelds (Schreibweise exakt wie im Konto). */
-export const FREQUENCY_CHOICE: Record<Route, string> = {
-  einzeln: "Einmalig oder selten",
-  gelegentlich: "Mehrmals im jahr",
-  regelmaessig: "Mehrmals im Monat",
+/**
+ * Werte des bereits vorhandenen Close-Auswahlfelds (Schreibweise exakt wie im
+ * Konto). "Kann ich noch nicht einschätzen" hat dort keine Entsprechung und
+ * wird nicht geschrieben.
+ */
+export const FREQUENCY_CHOICE: Partial<Record<Frequency, string>> = {
+  einzelfall: "Einmalig oder selten",
+  paar_mal_jahr: "Mehrmals im jahr",
+  monatlich_1_5: "Mehrmals im Monat",
+  monatlich_ueber_5: "Mehrmals im Monat",
 };
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -236,27 +254,42 @@ export function companySearchQuery(company: string) {
   };
 }
 
+export function formatTimestamp(date: Date): string {
+  const text = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+  return `${text} Uhr (Europe/Berlin)`;
+}
+
 /** Strukturierter Kontext als lesbarer Text für Beschreibung bzw. Notiz. */
-export function buildContextText(lead: Lead, extraLines: string[] = []): string {
-  const lines: string[] = [`Quelle: ${lead.source}`, `Landing Variant: ${lead.landing_variant}`];
-  lines.push(`Anliegen: ${NEED_LABEL[lead.need]}`);
-  if (lead.check) {
-    const c = lead.check;
-    lines.push(
-      `Check Route: ${c.check_route}`,
-      `Fälle/Zeitraum: ${countPhrase(c.check_route, c.claim_count)}`,
-      `Ø Forderung: ${formatEuro(c.average_claim_amount_eur)}`,
-      `Stadium: ${STAGE_LABEL[c.claim_stage]}`,
-      `Kundentyp: ${DEBTOR_LABEL[c.debtor_customer_type]}`,
-      `Rechnerisches Volumen: ${formatEuro(c.calculated_volume_eur)}${c.claim_period === "month" ? " (Hochrechnung 12 Monate)" : ""}`,
-    );
-  } else {
-    lines.push("Forderungscheck: nicht ausgefüllt (Direktanfrage)");
-  }
+export function buildContextText(lead: Lead, submittedAt: Date, extraLines: string[] = []): string {
+  const lines: string[] = [
+    `Leadquelle: ${lead.source}`,
+    `Eingang: ${formatTimestamp(submittedAt)}`,
+    `Segment: ${SEGMENT_LABEL[lead.segment]}${hasOngoingPotential(lead.frequency) ? " – potenzieller Bedarf an laufender Betreuung" : ""}`,
+    "",
+    `Häufigkeit: ${FREQUENCY_LABEL[lead.frequency]}`,
+    `Forderungshöhe: ${AMOUNT_LABEL[lead.amount]}`,
+    `Kundentyp: ${DEBTOR_LABEL[lead.debtor]}`,
+    `Stand: ${STAGE_LABEL[lead.stage]}`,
+  ];
+  if (lead.industry) lines.push(`Branche: ${INDUSTRY_LABEL[lead.industry]}`);
+  lines.push(`Kontaktwunsch: ${CONTACT_PREFERENCE_LABEL[lead.contact_preference]}`, "");
+  lines.push(`Landingpage-Variante: ${lead.landing_variant} · Funnel: ${lead.funnel_variant}`);
   const utm = Object.entries(lead.utm).map(([k, v]) => `${k}=${v}`);
-  if (utm.length) lines.push(`UTM: ${utm.join(" · ")}`);
-  lines.push(...extraLines);
-  if (lead.message) lines.push("", "Nachricht:", lead.message);
+  lines.push(`UTM: ${utm.length ? utm.join(" · ") : "keine"}`);
+  const origin = [
+    lead.origin.page_path ? `Seite ${lead.origin.page_path}` : null,
+    lead.origin.referrer_host ? `Verweis von ${lead.origin.referrer_host}` : null,
+  ].filter(Boolean);
+  if (origin.length) lines.push(`Herkunft: ${origin.join(" · ")}`);
+  lines.push(`Anfrage-ID: ${lead.submission_id}`);
+  if (extraLines.length) lines.push("", ...extraLines);
   return lines.join("\n");
 }
 
@@ -265,22 +298,22 @@ export function buildCustomFields(lead: Lead, map: CloseFieldMap = {}): Record<s
   const set = (id: string | undefined, value: string | undefined) => {
     if (id && value) out[`custom.${id}`] = value;
   };
+  set(map.frequencyChoice, FREQUENCY_CHOICE[lead.frequency]);
+  set(map.source, lead.source);
+  set(map.segment, SEGMENT_LABEL[lead.segment]);
+  set(map.frequency, FREQUENCY_LABEL[lead.frequency]);
+  set(map.amount, AMOUNT_LABEL[lead.amount]);
+  set(map.debtorType, DEBTOR_LABEL[lead.debtor]);
+  set(map.stage, STAGE_LABEL[lead.stage]);
+  set(map.contactPreference, CONTACT_PREFERENCE_LABEL[lead.contact_preference]);
   set(map.landingVariant, lead.landing_variant);
+  set(map.funnelVariant, lead.funnel_variant);
   set(map.utmSource, lead.utm.utm_source);
   set(map.utmCampaign, lead.utm.utm_campaign);
-  if (lead.check) {
-    const c = lead.check;
-    set(map.frequencyChoice, FREQUENCY_CHOICE[c.check_route]);
-    set(map.checkRoute, c.check_route);
-    set(map.claimsPeriod, countPhrase(c.check_route, c.claim_count));
-    set(map.avgAmount, formatEuro(c.average_claim_amount_eur));
-    set(map.stage, c.claim_stage);
-    set(map.debtorType, c.debtor_customer_type);
-  }
   return out;
 }
 
-export async function submitLeadToClose(lead: Lead, cfg: CloseConfig): Promise<CloseResult> {
+export async function submitLeadToClose(lead: Lead, cfg: CloseConfig, submittedAt: Date = new Date()): Promise<CloseResult> {
   const byEmail = parseLeads(await request(cfg, "POST", "/data/search/", emailSearchQuery(lead.email)));
 
   if (byEmail.length > 0) {
@@ -298,7 +331,7 @@ export async function submitLeadToClose(lead: Lead, cfg: CloseConfig): Promise<C
     const contact = [`Kontakt laut Anfrage: ${lead.name}, ${lead.email}${lead.phone ? `, ${lead.phone}` : ""}`];
     await request(cfg, "POST", "/activity/note/", {
       lead_id: target.id,
-      note: `Neue Anfrage über die Landingpage\n\n${buildContextText(lead, [...contact, ...review])}`,
+      note: `Neue Anfrage über die Landingpage\n\n${buildContextText(lead, submittedAt, [...contact, ...review])}`,
     });
     return {
       outcome: review.length ? "note_on_existing_lead_review" : "note_on_existing_lead",
@@ -321,7 +354,7 @@ export async function submitLeadToClose(lead: Lead, cfg: CloseConfig): Promise<C
 
   const basePayload = {
     name: lead.company,
-    description: buildContextText(lead, duplicateHint),
+    description: buildContextText(lead, submittedAt, duplicateHint),
     ...(cfg.leadStatusId ? { status_id: cfg.leadStatusId } : {}),
     contacts: [
       {
@@ -347,7 +380,7 @@ export async function submitLeadToClose(lead: Lead, cfg: CloseConfig): Promise<C
     const fallbackHints = [...duplicateHint, ...(lead.phone ? [`Telefon laut Anfrage: ${lead.phone}`] : [])];
     created = await request(cfg, "POST", "/lead/", {
       ...basePayload,
-      description: buildContextText(lead, fallbackHints),
+      description: buildContextText(lead, submittedAt, fallbackHints),
       contacts: [{ name: lead.name, emails: [{ email: lead.email, type: "office" }] }],
     });
   }

@@ -5,12 +5,12 @@
  *  - Ohne Einwilligung wird nichts geladen und nichts gesendet; Events vor der
  *    Einwilligung werden verworfen, nicht nachgereicht.
  *  - Die Parameter sind auf Kategorien beschränkt. Namen, E-Mail, Telefon,
- *    Firmen, Beträge, Fallzahlen oder Freitext können über diese Typen gar
- *    nicht übergeben werden.
+ *    Firmen oder einzelne Antworten können über diese Typen gar nicht
+ *    übergeben werden.
  *  - Das Meta-Standardevent "Lead" wird ausschließlich bei
  *    `lead_submit_success` ausgelöst, also nach bestätigter CRM-Speicherung.
  */
-import type { Period, Route, Stage } from "./check";
+import type { FunnelVariant, Segment, StepKey } from "./funnel";
 import { getConsent } from "./consent";
 import type { LeadErrorCode } from "./lead";
 import { GA4_MEASUREMENT_ID, META_PIXEL_ID } from "./public-config";
@@ -18,13 +18,16 @@ import { GA4_MEASUREMENT_ID, META_PIXEL_ID } from "./public-config";
 export type FailureClass = LeadErrorCode | "network";
 
 export interface AnalyticsEvents {
-  check_start: { landing_variant: "A" | "B" };
-  check_step_2: { route: Route };
-  check_complete: { route: Route; stage: Stage; period: Period };
-  result_cta_click: { route: Route };
-  form_start: { route?: Route };
-  lead_submit_success: { landing_variant: "A" | "B"; route?: Route };
+  /** Erste aktive Antwort im Funnel. */
+  funnel_start: { landing_variant: string; funnel_variant: FunnelVariant };
+  /** Ein Schritt wurde beantwortet. Nur Schrittname und Position – nie die Antwort. */
+  funnel_step_complete: { step: StepKey; step_number: number; funnel_variant: FunnelVariant };
+  /** Seite wird verlassen, nachdem der Funnel begonnen, aber nicht abgeschlossen wurde. */
+  funnel_abandon: { last_step: StepKey; step_number: number; funnel_variant: FunnelVariant };
+  lead_submit_success: { landing_variant: string; funnel_variant: FunnelVariant; segment: Segment };
   lead_submit_failure: { error_class: FailureClass };
+  /** Klick auf den optionalen Terminlink in der Bestätigungsansicht. */
+  booking_link_click: { funnel_variant: FunnelVariant };
 }
 
 export type AnalyticsEventName = keyof AnalyticsEvents;
@@ -43,6 +46,7 @@ declare global {
 }
 
 let loaded = false;
+const sentLeadIds = new Set<string>();
 
 function loadScript(src: string): void {
   const s = document.createElement("script");
@@ -110,8 +114,10 @@ export function track<K extends AnalyticsEventName>(
 
   if (META_PIXEL_ID && window.fbq) {
     window.fbq("trackCustom", name, clean);
-    if (name === "lead_submit_success") {
-      // eventID ermöglicht die spätere Deduplizierung mit der Conversions API.
+    if (name === "lead_submit_success" && !(options.eventId && sentLeadIds.has(options.eventId))) {
+      // Je Anfrage höchstens ein Lead-Event. Die eventID ermöglicht außerdem
+      // die spätere Deduplizierung mit der Conversions API.
+      if (options.eventId) sentLeadIds.add(options.eventId);
       window.fbq("track", "Lead", {}, options.eventId ? { eventID: options.eventId } : undefined);
     }
   }

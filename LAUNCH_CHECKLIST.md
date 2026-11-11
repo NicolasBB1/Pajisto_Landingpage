@@ -1,6 +1,6 @@
 # Launch-Checkliste
 
-Stand 10.11.2026. Nichts davon ist erledigt, solange es hier nicht abgehakt ist.
+Stand 11.11.2026 (Multistep-Anfrage). Nichts davon ist erledigt, solange es hier nicht abgehakt ist.
 
 ## 1. Zugänge und IDs
 
@@ -8,7 +8,9 @@ Stand 10.11.2026. Nichts davon ist erledigt, solange es hier nicht abgehakt ist.
 - [ ] `LEAD_MODE=close` setzen
 - [x] Lead-Status für neue Anfragen: „Inbound Lead Ads“ (in Vercel als `CLOSE_LEAD_STATUS_ID` gesetzt)
 - [x] Test-Deployment im Demo-Modus: https://pajisto-landingpage.vercel.app
-- [ ] Die acht freigegebenen Kontextfelder in Close anlegen (Settings → Custom Fields → Lead, Typ Text) und die IDs in Vercel setzen – Namen und Variablen in `docs/CLOSE_INTEGRATION.md`. Über den angebundenen Close-Zugang lassen sich Felder nicht anlegen.
+- [ ] Kontextfelder in Close anlegen (Settings → Custom Fields → Lead, Typ Text) und IDs in Vercel setzen. **Neue Liste** mit elf Feldern in `docs/CLOSE_INTEGRATION.md`; über den angebundenen Close-Zugang lassen sich Felder nicht anlegen.
+- [ ] Terminlink festlegen (`NEXT_PUBLIC_BOOKING_URL`), z. B. den Calendly-Link „Erstberatung zu Ihrer offenen Forderung“ – oder bewusst weglassen
+- [ ] Funnel-Test festlegen: `kurz`, `ausfuehrlich` oder `split`
 - [ ] Meta-Pixel-ID (`NEXT_PUBLIC_META_PIXEL_ID`), ggf. GA4-ID
 - [ ] Entscheidung: Conversions API ja/nein (derzeit nicht implementiert)
 
@@ -18,7 +20,7 @@ Stand 10.11.2026. Nichts davon ist erledigt, solange es hier nicht abgehakt ist.
 - [ ] Consent-Banner (Text, Gleichwertigkeit, Widerruf, Speicherdauer) prüfen lassen oder durch ein CMP ersetzen
 - [ ] Datenschutzhinweis am Formular prüfen
 - [ ] Auftragsverarbeitung / Drittlandtransfer für Close, Vercel, Meta, Google klären
-- [ ] Werbeaussagen freigeben: „Registrierter Inkassodienstleister (§ 10 RDG)“ (laut Impressum belegt), „Persönliche Ansprechpartner“, „Ein Ansprechpartner“, Aussagen zu Partnerkanzleien und Vollstreckung
+- [ ] Werbeaussagen freigeben: „Registrierter Inkassodienstleister (§ 10 RDG)“ (laut Impressum belegt), „Persönliche Ansprechpartner“, „wir übernehmen die Kommunikation mit dem Schuldner“, „auf Wunsch bis zur Vollstreckung“, Aussagen zu Partnerkanzleien, FAQ-Antwort zu den Kosten
 - [ ] Texte zu bestrittenen und titulierten Forderungen fachlich gegenlesen
 - [ ] Impressum-/Datenschutz-Links: verweisen auf pajisto.de; klären, ob die Landingpage auf eigener Domain eigene Seiten braucht
 
@@ -28,13 +30,14 @@ Stand 10.11.2026. Nichts davon ist erledigt, solange es hier nicht abgehakt ist.
 - [ ] In Close prüfen: Lead, Kontakt, Beschreibung, Status, Custom Fields
 - [ ] Zweite Einsendung mit derselben E-Mail: es entsteht eine Notiz, kein zweiter Lead (bestätigt die Suchabfrage gegen das echte Konto)
 - [ ] Einsendung mit derselben E-Mail, anderer Firma: Notiz mit „BITTE PRÜFEN“
-- [ ] Direktanfrage ohne Check
+- [ ] Anfrage mit Kontaktwunsch „Rückruf“: Telefonnummer am Kontakt
+- [ ] Falls Terminlink gesetzt: Buchung mit derselben E-Mail erzeugt keinen zweiten Lead
 - [ ] Testdaten in Close wieder löschen
 
 ## 4. Tracking-Probe
 
 - [ ] Ohne Zustimmung: im Netzwerk-Tab keine Anfragen an Meta/Google
-- [ ] Nach Zustimmung: `PageView` und Check-Events im Meta Events Manager (Test Events)
+- [ ] Nach Zustimmung: `PageView` und Funnel-Events im Meta Events Manager (Test Events)
 - [ ] `Lead` erscheint genau einmal, erst nach erfolgreicher Einsendung
 - [ ] Keine personenbezogenen Daten in den Event-Parametern
 - [ ] UTM-Parameter einer Testanzeige kommen in Close an
@@ -47,7 +50,7 @@ Stand 10.11.2026. Nichts davon ist erledigt, solange es hier nicht abgehakt ist.
 - [ ] Open-Graph-Bild ergänzen (derzeit keines)
 - [ ] Vercel-Firewall/Rate-Limit für `/api/lead` als zusätzlichen Schutz erwägen
 - [ ] Test auf echten Geräten (iPhone Safari, Android Chrome) und mit einem Screenreader
-- [ ] Variante A mit identischer Attribution (`landing_variant: "A"`) ausstatten, bevor der A/B-Test startet
+- [ ] In Close einen Status „Qualifiziert“ und ein Merkmal für geführte Gespräche einführen, wenn die Rückführung in die Marketingauswertung gewünscht ist
 - [ ] Kampagnen erst nach Freigabe auf die neue URL umstellen
 
 ## Bekannte Restpunkte

@@ -23,7 +23,8 @@ export default defineConfig({
       LEAD_MODE: "mock",
       NEXT_PUBLIC_META_PIXEL_ID: "000000000000000",
       NEXT_PUBLIC_GA4_MEASUREMENT_ID: "G-TEST000000",
-      NEXT_PUBLIC_LANDING_VARIANT: "B",
+      NEXT_PUBLIC_LANDING_VARIANT: "C",
+      NEXT_PUBLIC_BOOKING_URL: "https://termin.example/pajisto",
     },
   },
 });

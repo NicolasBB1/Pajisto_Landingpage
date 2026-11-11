@@ -28,33 +28,46 @@ export async function open(page: Page, consent: ConsentChoice = "deny", path = "
   return { trackerHits };
 }
 
-export interface CheckValues {
-  route: "einzeln" | "gelegentlich" | "regelmaessig";
-  count?: string;
+export interface FunnelAnswers {
+  frequency?: string;
   amount?: string;
-  stage?: "ueberfaellig" | "gemahnt" | "bestritten" | "tituliert";
+  debtor?: string;
+  stage?: string;
+  industry?: string;
 }
 
-const ROUTE_NAME = {
-  einzeln: "Ich habe eine konkrete offene Rechnung",
-  gelegentlich: "Gelegentlich bleiben Rechnungen offen",
-  regelmaessig: "Jeden Monat sind mehrere Rechnungen offen",
+export const DEFAULT_ANSWERS: Required<Omit<FunnelAnswers, "industry">> = {
+  frequency: "monatlich_1_5",
+  amount: "250_1000",
+  debtor: "privat",
+  stage: "gemahnt",
 };
 
-export async function runCheck(page: Page, v: CheckValues) {
-  const card = page.getByTestId("check-card");
-  await card.getByRole("radio", { name: new RegExp(ROUTE_NAME[v.route]) }).check({ force: true });
-  await card.getByRole("button", { name: "Weiter" }).click();
-  if (v.count !== undefined) await card.locator('input[name="count"]').fill(v.count);
-  if (v.amount !== undefined) await card.locator('input[name="amount"]').fill(v.amount);
-  if (v.stage) await card.locator('select[name="stage"]').selectOption(v.stage);
-  await card.getByRole("button", { name: "Ergebnis anzeigen" }).click();
+export const funnel = (page: Page) => page.getByTestId("funnel");
+
+/** Beantwortet eine Frage per Klick; der Funnel springt automatisch weiter. */
+export async function answer(page: Page, step: string, value: string) {
+  const f = funnel(page);
+  await expect(f).toHaveAttribute("data-step", step);
+  await f.locator(`[data-value="${value}"]`).click();
+  await expect(f).not.toHaveAttribute("data-step", step);
 }
 
-export async function fillContact(page: Page, over: Partial<Record<"name" | "company" | "email", string>> = {}) {
-  await page.locator("#contact-name").fill(over.name ?? "Erika Beispiel");
-  await page.locator("#contact-company").fill(over.company ?? "Beispiel Fitness GmbH");
-  await page.locator("#contact-email").fill(over.email ?? "erika@beispiel-fitness.de");
+export async function answerQuestions(page: Page, over: FunnelAnswers = {}) {
+  const a = { ...DEFAULT_ANSWERS, ...over };
+  await answer(page, "frequency", a.frequency);
+  await answer(page, "amount", a.amount);
+  await answer(page, "debtor", a.debtor);
+  await answer(page, "stage", a.stage);
+  if (a.industry) await answer(page, "industry", a.industry);
+  await expect(funnel(page)).toHaveAttribute("data-step", "contact");
+}
+
+export async function fillContact(page: Page, over: Partial<Record<"name" | "company" | "email" | "phone", string>> = {}) {
+  await page.locator("#funnel-name").fill(over.name ?? "Erika Beispiel");
+  await page.locator("#funnel-company").fill(over.company ?? "Beispiel Fitness GmbH");
+  await page.locator("#funnel-email").fill(over.email ?? "erika@beispiel-fitness.de");
+  if (over.phone !== undefined) await page.locator("#funnel-phone").fill(over.phone);
 }
 
 /** Ersetzt den Server-Endpunkt und zeichnet die gesendeten Bodies auf. */
@@ -73,5 +86,5 @@ export async function stubLeadApi(
   return bodies;
 }
 
+export const closeOk = { status: 200, body: { ok: true, mode: "close", event_id: "evt-42" } };
 export const events = (page: Page) => page.evaluate(() => (window as any).__pajistoEvents ?? []);
-export const text = (s: string | null) => (s ?? "").replace(/ /g, " ");

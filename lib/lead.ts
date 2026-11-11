@@ -3,107 +3,76 @@
  *
  * Dieselbe Funktion `validateLead` läuft im Browser (sofortige Rückmeldung)
  * und im Server-Endpunkt (maßgebliche Prüfung). Der Server vertraut keinem
- * Wert aus dem Browser – auch das berechnete Volumen wird neu berechnet.
+ * Wert aus dem Browser: Segment und Quelle werden serverseitig gesetzt.
  */
 import {
-  MAX_AMOUNT,
-  MAX_COUNT,
-  PERIOD_BY_ROUTE,
-  calculateVolume,
-  isDebtorType,
-  isRoute,
+  LEAD_SOURCE,
+  isAmount,
+  isContactPreference,
+  isDebtor,
+  isFrequency,
+  isFunnelVariant,
+  isIndustry,
   isStage,
-  type DebtorType,
-  type Period,
-  type Route,
+  segmentOf,
+  type Amount,
+  type ContactPreference,
+  type Debtor,
+  type Frequency,
+  type FunnelVariant,
+  type Industry,
+  type Segment,
   type Stage,
-} from "./check";
-
-export const LEAD_SOURCE = "Pajisto Landingpage Forderungscheck V2";
-
-export const NEEDS = ["einzeln", "gelegentlich", "regelmaessig", "unklar"] as const;
-export type Need = (typeof NEEDS)[number];
-
-export const NEED_LABEL: Record<Need, string> = {
-  einzeln: "Einzelne offene Forderung",
-  gelegentlich: "Gelegentliche Zahlungsausfälle",
-  regelmaessig: "Laufendes Forderungsmanagement",
-  unklar: "Ich bin noch unsicher",
-};
+} from "./funnel";
 
 export const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
 export type UtmKey = (typeof UTM_KEYS)[number];
 export type Utm = Partial<Record<UtmKey, string>>;
 
-export interface CheckContext {
-  check_route: Route;
-  claim_count: number;
-  claim_period: Period;
-  average_claim_amount_eur: number;
-  claim_stage: Stage;
-  debtor_customer_type: DebtorType;
-  calculated_volume_eur: number;
+/** Herkunft ohne Personenbezug: nur Seitenpfad und Hostname der verweisenden Seite. */
+export interface Origin {
+  page_path?: string;
+  referrer_host?: string;
 }
 
 export interface Lead {
   submission_id: string;
   source: typeof LEAD_SOURCE;
-  landing_variant: "A" | "B";
+  landing_variant: string;
+  funnel_variant: FunnelVariant;
+  segment: Segment;
+  frequency: Frequency;
+  amount: Amount;
+  debtor: Debtor;
+  stage: Stage;
+  industry?: Industry;
   name: string;
   company: string;
   email: string;
   phone?: string;
-  message?: string;
-  need: Need;
-  /** Fehlt vollständig, wenn der Besucher den Check übersprungen hat. */
-  check?: CheckContext;
+  contact_preference: ContactPreference;
   utm: Utm;
+  origin: Origin;
 }
 
-export type LeadField = "name" | "company" | "email" | "phone" | "message" | "need";
+export type LeadField = "name" | "company" | "email" | "phone" | "contact_preference";
 export type FieldErrors = Partial<Record<LeadField, string>>;
 
 export type LeadValidation =
   | { ok: true; lead: Lead }
   | { ok: false; fields: FieldErrors; reason: "fields" | "malformed" };
 
-const LIMITS = { name: 120, company: 160, email: 254, phone: 40, message: 2000, utm: 200 };
+const LIMITS = { name: 120, company: 160, email: 254, phone: 40, utm: 200 };
 
-// Steuerzeichen entfernen (Zeilenumbrüche bleiben nur in der Nachricht erhalten).
-const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
-
-function cleanLine(v: unknown): string {
-  return typeof v === "string" ? v.replace(CONTROL, "").replace(/\s+/g, " ").trim() : "";
-}
-function cleanText(v: unknown): string {
-  return typeof v === "string" ? v.replace(CONTROL, "").replace(/\r\n?/g, "\n").trim() : "";
-}
+// Steuerzeichen entfernen.
+const CONTROL = /[\u0000-\u001F\u007F]/g;
+const cleanLine = (v: unknown) => (typeof v === "string" ? v.replace(CONTROL, " ").replace(/\s+/g, " ").trim() : "");
 
 // Pragmatische Syntaxprüfung; die Zustellbarkeit lässt sich ohnehin nicht prüfen.
 const EMAIL_RE = /^[^\s@<>()[\],;:"]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 const SUBMISSION_ID_RE = /^[A-Za-z0-9-]{16,64}$/;
-
-function parseCheck(raw: unknown): CheckContext | undefined | "invalid" {
-  if (raw === undefined || raw === null) return undefined;
-  if (typeof raw !== "object") return "invalid";
-  const c = raw as Record<string, unknown>;
-  const count = c.claim_count;
-  const amount = c.average_claim_amount_eur;
-  if (!isRoute(c.check_route) || !isStage(c.claim_stage) || !isDebtorType(c.debtor_customer_type)) return "invalid";
-  if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 1 || count > MAX_COUNT) return "invalid";
-  if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) return "invalid";
-  const rounded = Math.round(amount * 100) / 100;
-  return {
-    check_route: c.check_route,
-    claim_count: count,
-    claim_period: PERIOD_BY_ROUTE[c.check_route],
-    average_claim_amount_eur: rounded,
-    claim_stage: c.claim_stage,
-    debtor_customer_type: c.debtor_customer_type,
-    // Nie den Wert aus dem Browser übernehmen.
-    calculated_volume_eur: calculateVolume(c.check_route, count, rounded),
-  };
-}
+const VARIANT_RE = /^[A-Za-z0-9_-]{1,24}$/;
+const HOST_RE = /^[a-z0-9.-]{1,253}$/;
 
 function parseUtm(raw: unknown): Utm {
   const utm: Utm = {};
@@ -113,6 +82,18 @@ function parseUtm(raw: unknown): Utm {
     if (v) utm[key] = v;
   }
   return utm;
+}
+
+function parseOrigin(raw: unknown): Origin {
+  const origin: Origin = {};
+  if (!raw || typeof raw !== "object") return origin;
+  const r = raw as Record<string, unknown>;
+  // Nur der Pfad – Query-Parameter könnten Klick-IDs enthalten.
+  const path = cleanLine(r.page_path).split(/[?#]/)[0]!.slice(0, 120);
+  if (path.startsWith("/")) origin.page_path = path;
+  const host = cleanLine(r.referrer_host).toLowerCase();
+  if (HOST_RE.test(host)) origin.referrer_host = host;
+  return origin;
 }
 
 export function validateLead(raw: unknown): LeadValidation {
@@ -138,28 +119,39 @@ export function validateLead(raw: unknown): LeadValidation {
   else if (email.length > LIMITS.email || !EMAIL_RE.test(email))
     fields.email = "Bitte prüfen Sie die E-Mail-Adresse, zum Beispiel name@unternehmen.de.";
 
+  const preference = r.contact_preference === undefined || r.contact_preference === "" ? "email" : r.contact_preference;
+  if (!isContactPreference(preference)) {
+    fields.contact_preference = "Bitte wählen Sie, wie wir Sie erreichen sollen.";
+  }
+
   const phone = cleanLine(r.phone);
   if (phone) {
     const digits = phone.replace(/\D/g, "").length;
     if (phone.length > LIMITS.phone || !/^[0-9+()\/\s.-]+$/.test(phone) || digits < 6 || digits > 20) {
-      fields.phone = "Bitte prüfen Sie die Telefonnummer oder lassen Sie das Feld leer.";
+      fields.phone =
+        preference === "rueckruf"
+          ? "Bitte prüfen Sie die Telefonnummer."
+          : "Bitte prüfen Sie die Telefonnummer oder lassen Sie das Feld leer.";
     }
-  }
-
-  const message = cleanText(r.message);
-  if (message.length > LIMITS.message)
-    fields.message = `Bitte kürzen Sie die Nachricht auf höchstens ${LIMITS.message} Zeichen.`;
-
-  const need = r.need === undefined || r.need === "" ? "unklar" : r.need;
-  if (typeof need !== "string" || !(NEEDS as readonly string[]).includes(need)) {
-    fields.need = "Bitte wählen Sie eine der Möglichkeiten aus.";
+  } else if (preference === "rueckruf") {
+    fields.phone = "Für einen Rückruf benötigen wir Ihre Telefonnummer.";
   }
 
   if (Object.keys(fields).length > 0) return { ok: false, fields, reason: "fields" };
 
-  const check = parseCheck(r.check);
   const submissionId = typeof r.submission_id === "string" ? r.submission_id : "";
-  if (check === "invalid" || !SUBMISSION_ID_RE.test(submissionId)) {
+  const landingVariant = typeof r.landing_variant === "string" ? r.landing_variant : "";
+  const industry = r.industry === undefined || r.industry === null || r.industry === "" ? undefined : r.industry;
+  if (
+    !SUBMISSION_ID_RE.test(submissionId) ||
+    !VARIANT_RE.test(landingVariant) ||
+    !isFunnelVariant(r.funnel_variant) ||
+    !isFrequency(r.frequency) ||
+    !isAmount(r.amount) ||
+    !isDebtor(r.debtor) ||
+    !isStage(r.stage) ||
+    (industry !== undefined && !isIndustry(industry))
+  ) {
     return { ok: false, fields: {}, reason: "malformed" };
   }
 
@@ -168,15 +160,22 @@ export function validateLead(raw: unknown): LeadValidation {
     lead: {
       submission_id: submissionId,
       source: LEAD_SOURCE,
-      landing_variant: r.landing_variant === "A" ? "A" : "B",
+      landing_variant: landingVariant,
+      funnel_variant: r.funnel_variant,
+      // Nie aus dem Browser übernehmen.
+      segment: segmentOf(r.frequency),
+      frequency: r.frequency,
+      amount: r.amount,
+      debtor: r.debtor,
+      stage: r.stage,
+      ...(industry ? { industry: industry as Industry } : {}),
       name,
       company,
       email,
       ...(phone ? { phone } : {}),
-      ...(message ? { message } : {}),
-      need: need as Need,
-      ...(check ? { check } : {}),
+      contact_preference: preference as ContactPreference,
       utm: parseUtm(r.utm),
+      origin: parseOrigin(r.origin),
     },
   };
 }
