@@ -31,13 +31,20 @@ const FAQ = [
   },
 ];
 
-function Logo() {
+/**
+ * Wappen laut Brand Board: Primärvariante auf hellen, Negativvariante auf
+ * dunklen Flächen. Die Dateien stammen unverändert aus dem Brand Board (nicht
+ * nachgezeichnet); Mindesthöhe digital 40 px.
+ */
+function Logo({ negative = false }: { negative?: boolean }) {
   return (
     <a className="logo" href="#top" aria-label="Pajisto – zum Seitenanfang">
-      <span className="mark" aria-hidden="true">
-        p
-      </span>{" "}
-      pajisto
+      <img
+        src={negative ? "/brand/pajisto-wappen-negativ.png" : "/brand/pajisto-wappen.png"}
+        alt="Pajisto"
+        width={232}
+        height={264}
+      />
     </a>
   );
 }
@@ -63,7 +70,7 @@ export default function Page() {
             <a href="#ablauf">Ablauf</a>
             <a href="#fragen">Fragen &amp; Antworten</a>
           </div>
-          <a href="#anfrage" className="btn btn-dark">
+          <a href="#anfrage" className="btn btn-accent">
             Anfrage starten <Arrow />
           </a>
         </nav>
@@ -77,7 +84,7 @@ export default function Page() {
               <h1 className="display" id="hero-title">
                 Offene Rechnungen?
                 <br />
-                <span className="underline">Wir übernehmen das.</span>
+                Wir übernehmen das.
               </h1>
             </div>
             <p className="lead hero-sub">
@@ -227,7 +234,7 @@ export default function Page() {
                 <a href={COMPANY.phoneHref}>{COMPANY.phoneDisplay}</a>
               </p>
             </div>
-            <a href="#anfrage" className="btn btn-lime">
+            <a href="#anfrage" className="btn btn-accent">
               Anfrage starten <Arrow />
             </a>
           </div>
@@ -236,7 +243,7 @@ export default function Page() {
 
       <footer className="footer">
         <div className="container footer-row">
-          <Logo />
+          <Logo negative />
           <small>
             © {new Date().getFullYear()} {COMPANY.name} · {COMPANY.street}, {COMPANY.city}
           </small>

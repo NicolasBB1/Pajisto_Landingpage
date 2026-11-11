@@ -47,7 +47,8 @@ Stand 11.11.2026 (Multistep-Anfrage). Nichts davon ist erledigt, solange es hier
 - [ ] Ziel-Domain festlegen, `NEXT_PUBLIC_SITE_URL` setzen
 - [ ] `NEXT_PUBLIC_ALLOW_INDEXING=true` nur, wenn die Seite indexiert werden soll (reine Ads-Landingpages oft bewusst nicht)
 - [ ] `NEXT_PUBLIC_SHOW_PREVIEW_BAR` in Produktion nicht auf `true`
-- [ ] Open-Graph-Bild ergänzen (derzeit keines)
+- [ ] Wappen als Vektordatei (SVG) bereitstellen – derzeit eine aus dem Brand-Board-PDF entnommene PNG-Datei (für die verwendeten Größen scharf, aber nicht beliebig skalierbar)
+- [ ] Open-Graph-Bild ergänzen (derzeit keines); laut Brand Board wäre dafür die Akzentvariante des Wappens zulässig
 - [ ] Vercel-Firewall/Rate-Limit für `/api/lead` als zusätzlichen Schutz erwägen
 - [ ] Test auf echten Geräten (iPhone Safari, Android Chrome) und mit einem Screenreader
 - [ ] In Close einen Status „Qualifiziert“ und ein Merkmal für geführte Gespräche einführen, wenn die Rückführung in die Marketingauswertung gewünscht ist
@@ -58,5 +59,5 @@ Stand 11.11.2026 (Multistep-Anfrage). Nichts davon ist erledigt, solange es hier
 - Close-Anbindung nur gegen Mock-Server getestet, nicht gegen das echte Konto.
 - Rate-Limit und Idempotenz gelten je Serverinstanz (siehe README).
 - Keine gemessenen Lighthouse-/Core-Web-Vitals-Werte; die Seite ist statisch, ohne Webfonts und ohne Bilder, gemessen wurde aber nicht.
-- Barrierefreiheit: automatisierte Tastatur- und Strukturtests, kein manueller Screenreader-Test, keine vollständige Kontrastprüfung.
+- Barrierefreiheit: automatisierte Tastatur- und Strukturtests, kein manueller Screenreader-Test, keine vollständige Kontrastprüfung. Das Mittelgrau #797979 der Marke liegt auf Weiß knapp unter dem AA-Kontrast für kleinen Text und wird deshalb nur für Beschriftungen verwendet, nicht für Fließtext.
 - Getestet wurde in Chromium; Safari und Firefox nicht.

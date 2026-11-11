@@ -1,0 +1,36 @@
+PAJISTO — FARBPALETTE / CORPORATE IDENTITY
+================================================
+
+PRIMÄR · Dunkelgrau
+HEX  #363636
+RGB  54, 54, 54
+Rolle: Primärfarbe, Flächen & Text, Logo-Grundton
+Anwendung: ca. 30 %
+
+AKZENT · Akzentgelb
+HEX  #F6B636
+RGB  246, 182, 54
+Rolle: Highlights, CTA, Schlüsselelemente (sparsam)
+Anwendung: ca. 3–5 %
+
+SEKUNDÄR · Mittelgrau
+HEX  #797979
+RGB  121, 121, 121
+Rolle: Sekundärtext, Trennlinien
+Anwendung: ca. 7 %
+
+TIEFE · Anthrazit
+HEX  #4A4A4A
+RGB  74, 74, 74
+Rolle: Tiefenebene, dunkle Hintergründe
+Anwendung: ca. 10 %
+
+NEGATIVRAUM · Weiß
+HEX  #FFFFFF
+RGB  255, 255, 255
+Rolle: Negativraum, Flächen
+Anwendung: ca. 50 %
+
+------------------------------------------------
+Schnellkopie:
+#363636  #F6B636  #797979  #4A4A4A  #FFFFFF

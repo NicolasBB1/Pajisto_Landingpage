@@ -54,6 +54,13 @@ Anzeigengruppe steuern. Die Variante steht in jeder Anfrage und in jedem
 Funnel-Event. Die Zuordnung wird nicht gespeichert (kein Cookie); im
 `split`-Modus kann ein Neuladen die Variante wechseln.
 
+## Gestaltung
+
+Nach dem Pajisto Brand Board (Ausgabe 2026 · V1.0): Dunkelgrau, Weiß und
+sparsames Akzentgelb, Montserrat für Überschriften, Inter für Fließtext, das
+Wappen als Logo. Farbwerte in `docs/brand/pajisto-farben.txt`, Umsetzung in
+`app/globals.css`, Logo-Dateien in `public/brand/`.
+
 ## Aufbau
 
 ```

@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 
-/** Eigene, leichtgewichtige Linien-Icons (rein dekorativ, daher aria-hidden). */
+/**
+ * Linien-Icons im Stil des Brand Boards: 24er-Raster, 2 px Strich, eckige
+ * Enden, spitze Ecken. Rein dekorativ, daher aria-hidden.
+ */
 const PATHS = {
   invoice: (
     <>
@@ -66,9 +69,9 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeWidth="2"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
       aria-hidden="true"
       focusable="false"
     >

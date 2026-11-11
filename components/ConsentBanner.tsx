@@ -57,10 +57,10 @@ export function ConsentBanner() {
         </p>
       </div>
       <div className="consent-actions">
-        <button type="button" className="btn btn-white" onClick={() => decide("denied")} data-testid="consent-deny">
+        <button type="button" className="btn btn-outline" onClick={() => decide("denied")} data-testid="consent-deny">
           Ablehnen
         </button>
-        <button type="button" className="btn btn-white" onClick={() => decide("granted")} data-testid="consent-accept">
+        <button type="button" className="btn btn-outline" onClick={() => decide("granted")} data-testid="consent-accept">
           Akzeptieren
         </button>
       </div>

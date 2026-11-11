@@ -286,7 +286,7 @@ export function Funnel({ leadMode }: { leadMode: "mock" | "close" | "disabled" }
                 <div className="booking">
                   <p>Wenn Sie möchten, können Sie direkt einen Gesprächstermin wählen. Das ist freiwillig.</p>
                   <a
-                    className="btn btn-white"
+                    className="btn btn-outline"
                     href={BOOKING_URL}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -508,7 +508,7 @@ export function Funnel({ leadMode }: { leadMode: "mock" | "close" | "disabled" }
               </div>
             </div>
 
-            <button type="submit" className="btn btn-dark funnel-submit" disabled={submitting} data-testid="submit">
+            <button type="submit" className="btn btn-accent funnel-submit" disabled={submitting} data-testid="submit">
               {submitting ? (
                 <>
                   <span className="spinner" aria-hidden="true" /> Wird gesendet …

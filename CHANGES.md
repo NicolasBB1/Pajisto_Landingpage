@@ -1,5 +1,16 @@
 # Änderungen
 
+## Corporate Identity nach Brand Board (11.11.2026)
+
+Die Seite folgt jetzt dem Brand Board „Ausgabe 2026 · V1.0“ statt der früheren grün/cremefarbenen Optik.
+
+- **Farben:** Dunkelgrau #363636, Anthrazit #4A4A4A, Mittelgrau #797979, Weiß, Akzentgelb #F6B636. Gelb nur auf Handlungselementen (CTA-Buttons, Absenden) und als kleine Markierung, nie als Fläche.
+- **Schrift:** Montserrat ExtraBold für Überschriften, Inter für Fließtext. Beide werden beim Build geladen und von der eigenen Domain ausgeliefert; Besucher-Browser sprechen nicht mit Google.
+- **Logo:** Wappen als Primärvariante im Header und Negativvariante im Footer, außerdem als Favicon. Die Dateien sind aus dem Brand-Board-PDF entnommen und nicht nachgezeichnet.
+- **Hero:** dunkle Fläche mit dezentem warmem Verlauf wie im Landingpage-Beispiel des Brand Boards; die weiße Funnel-Karte hebt sich davon ab.
+- **Formen und Icons:** kantigere Buttons und Karten, Icons mit 2 px Strich, eckigen Enden und spitzen Ecken.
+- **Bewusst nicht übernommen:** die Beispieltexte des Brand Boards („Kostenlos starten“, „keine Vorkosten“, „Preise“, „Antwort in 24 h“). Sie widersprechen den Vorgaben für diese Seite (keine Preis- und Kostenversprechen).
+
 ## Variante C – Multistep-Anfrage (11.11.2026)
 
 Ersetzt Variante B (Forderungscheck → Rechenergebnis → separates Formular).
