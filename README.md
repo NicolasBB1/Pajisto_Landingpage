@@ -78,6 +78,13 @@ deployen.
 
 ## Deployment (Vercel, Testdomain)
 
+**Aktuelles Test-Deployment (Demo-Modus, `noindex`, mit Vorschau-Leiste):**
+https://pajisto-landingpage.vercel.app – Vercel-Projekt `pajisto-landingpage`.
+Das Projekt ist nicht mit GitHub verknüpft (dem Vercel-Konto fehlt die
+GitHub-Verbindung); neue Stände werden per `npx vercel deploy --prod`
+veröffentlicht. Dort bereits gesetzt: `LEAD_MODE=mock`,
+`CLOSE_LEAD_STATUS_ID` (Inbound Lead Ads), `CLOSE_CF_FREQUENCY_CHOICE`.
+
 1. Repository in Vercel importieren (Framework wird als Next.js erkannt).
 2. Für das Test-Deployment setzen: `LEAD_MODE=mock`,
    `NEXT_PUBLIC_SHOW_PREVIEW_BAR=true`. Indexierung bleibt aus.

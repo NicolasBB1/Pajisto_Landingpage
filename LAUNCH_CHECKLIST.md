@@ -6,8 +6,9 @@ Stand 10.11.2026. Nichts davon ist erledigt, solange es hier nicht abgehakt ist.
 
 - [ ] Close-API-Key erzeugen und als `CLOSE_API_KEY` im Hosting hinterlegen (nicht per Chat/E-Mail/Git)
 - [ ] `LEAD_MODE=close` setzen
-- [ ] Lead-Status für neue Anfragen festlegen (`CLOSE_LEAD_STATUS_ID`, z. B. „Inbound Lead Ads“)
-- [ ] Entscheiden, ob die Kontextfelder in Close angelegt werden; IDs setzen (`docs/CLOSE_INTEGRATION.md`)
+- [x] Lead-Status für neue Anfragen: „Inbound Lead Ads“ (in Vercel als `CLOSE_LEAD_STATUS_ID` gesetzt)
+- [x] Test-Deployment im Demo-Modus: https://pajisto-landingpage.vercel.app
+- [ ] Die acht freigegebenen Kontextfelder in Close anlegen (Settings → Custom Fields → Lead, Typ Text) und die IDs in Vercel setzen – Namen und Variablen in `docs/CLOSE_INTEGRATION.md`. Über den angebundenen Close-Zugang lassen sich Felder nicht anlegen.
 - [ ] Meta-Pixel-ID (`NEXT_PUBLIC_META_PIXEL_ID`), ggf. GA4-ID
 - [ ] Entscheidung: Conversions API ja/nein (derzeit nicht implementiert)
 
